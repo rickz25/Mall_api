@@ -1,0 +1,31 @@
+[mall_config]
+
+#IP and port of Mall "192.168.1.1"
+HQ_IP=192.168.153.1
+Port=444
+#for multiple Mall, Mall_Code=7,22 otherwise Mall_Code=7
+Mall_Code=7,22
+
+# 0=off, 1=on
+Maintenance_sync=1
+
+#schedule task per minute
+task_schedule=5
+
+#DB Driver
+db_driver=ODBC Driver 17 for SQL Server
+
+#DB Host
+db_host=localhost
+
+#DB Name
+db_name=ayalatms_testing2
+
+#DB Username
+db_username=
+
+#DB Password
+db_password=
+
+#Additional details
+db_add_details=TrustServerCertificate=yes;Trusted_Connection=yes;

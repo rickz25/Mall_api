@@ -1,0 +1,10 @@
+/.vscode
+/api.py
+/app
+/app.py
+/dist
+/main.py
+/mall.spec
+/test.py
+/view.py
+/__pycache__
