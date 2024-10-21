@@ -85,9 +85,9 @@ async def post_request():
                     "Content-Type": "application/json",
                     "Authorization": token
                 }
-        async with aiohttp.ClientSession(trust_env=True) as session:
+        async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
         
-            response = await session.post(url, data=json_data, headers=headers)
+            response = await session.post(url, data=json_data, headers=headers, timeout=60)
             res = await response.json()
             # res = json.loads(res)
             
@@ -108,10 +108,10 @@ async def post_request():
                     url2 = f"http://{hq_ip}:{port}/api/post-maintenance"
                     postData={}
                     postData["mallcode"]=code
-                    response2 = await session.post(url2, data=json.dumps(postData), headers=headers)
+                    response2 = await session.post(url2, data=json.dumps(postData), headers=headers, timeout=60)
                     responseData = await response2.json()
                     res = json.loads(responseData)
-                    if responseData.ok:
+                    if response2.ok:
                         if res['status']==0:
                             # print(controller.post_maintenance(res))
                             result = controller.post_maintenance(res)
@@ -211,16 +211,16 @@ except Exception as e:
 start_time = time.time()
 
 
-def minimizeWindow():
-    root.withdraw()
-    root.overrideredirect(False)
-    root.iconify()
+# def minimizeWindow():
+#     root.withdraw()
+#     root.overrideredirect(False)
+#     root.iconify()
 
-def disable_event():
-    pass
+# def disable_event():
+#     pass
 
-root.resizable(False, False)
-root.protocol("WM_DELETE_WINDOW", minimizeWindow)
+# root.resizable(False, False)
+# root.protocol("WM_DELETE_WINDOW", minimizeWindow)
 
 # run app
 root.mainloop()

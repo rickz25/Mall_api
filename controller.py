@@ -61,7 +61,6 @@ class TaskController:
                             val = values[column]
                             if val is None or val =='':
                                 continue
-                            
                             # merchant and merchant_contacts
                             if tablename =='merchant' or tablename =='merchant_contacts' or  tablename =='merchant_office_contacts' or tablename =='merchant_reason':
                                 id = values['MERCHANT_CODE']
