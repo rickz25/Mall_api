@@ -17,6 +17,7 @@ from controller import TaskController
 import json
 import aiohttp
 import asyncio
+import socket
 
 # Create instances of Model, View, and Controller
 model = TaskModel()
@@ -75,8 +76,8 @@ def load_frame1(param):
     label=Label(frame1, text=param,fg=title_color,font=titleFont, bg=bg_color)
     label.place(relx=0.5, rely=0.5, anchor=CENTER)
 
+# Function sync for sales
 async def post_request():
-    try:
         url = f"http://{hq_ip}:{port}/api/post-sales-integration"
         
         json_data = controller.get_data()
@@ -92,45 +93,60 @@ async def post_request():
             await asyncio.sleep(0)
             if response.ok:
                 result = controller.post_data(res)
-                if result==None:
-                    load_frame1('Syncing...')
-                else:
-                    load_frame1(result)
             else:
                 logger.exception("Exception occurred: %s", str(result))
                 load_frame1('Server Error.')
 
+# Function sync for maintenance
+async def request_maintenance():
+      
+        headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": token
+                }
+        async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
+        
             if maintenance_sync ==1:
                 global mallcode
                 mallcode = mallcode.replace(" ", "")
                 for code in mallcode.split(","):
-                    url2 = f"http://{hq_ip}:{port}/api/post-maintenance"
+                    url = f"http://{hq_ip}:{port}/api/post-maintenance"
                     postData={}
                     postData["mallcode"]=code
-                    response2 = await session.post(url2, data=json.dumps(postData), headers=headers)
+                    response2 = await session.post(url, data=json.dumps(postData), headers=headers)
                     responseData = await response2.json()
                     await asyncio.sleep(0)
                     res = json.loads(responseData)
                     if response2.ok:
                         if res['status']==0:
-                            # print(controller.post_maintenance(res))
                             result = controller.post_maintenance(res)
-                            if result=="":
-                                load_frame1('Syncing...')
-                            else:
-                                load_frame1(result)
                         else:
                             logger.exception("Exception occurred: %s", res['message'])
                     else:
                         logger.exception("Exception occurred: %s", str(result))
                         load_frame1('Server Error.')
+
+async def main():
+    # check if the server is down or up
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex((hq_ip, int(port)))
+    if result == 0:
+        load_frame1('Syncing...')
+        print('sync')
+    else:
+        load_frame1('Waiting for a connection, Server Started.')
+        return
+    
+    # Gather task to sync and wait the other process
+    try:
+        await asyncio.gather(post_request(), request_maintenance())
     except Exception as e:
         logger.exception("Exception occurred: %s", str(e))
-        load_frame1('Cannot connect to the server.')
-
+    finally: 
+        await asyncio.gather(post_request())
 
 def trigger():
-     asyncio.run(post_request())
+     asyncio.run(main())
         
 # initiallize app with basic settings
 root = Tk()
@@ -193,23 +209,20 @@ load_frame1('Not started.')
 
 
 ##Schedule cron job
-# schedule.every(2).seconds.do(load_frame1)
-try:
-    # schedule.every(scheduleStart).seconds.do(trigger)
-    schedule.every(scheduleStart).seconds.do(trigger)
-    # schedule.every(scheduleStart).minutes.do(schedule_start)
+# try:
+schedule.every(scheduleStart).seconds.do(trigger)
+# schedule.every(scheduleStart).minutes.do(schedule_start)
 
-    def check_schedule():
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+def check_schedule():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
-    threading.Thread(target=check_schedule, daemon=True).start()
-except Exception as e:
-   logger.error('Error at %s', 'Scheduler', exc_info=e)
+threading.Thread(target=check_schedule, daemon=True).start()
+# except Exception as e:
+#    logger.error('Error at %s', 'Scheduler', exc_info=e)
 
 start_time = time.time()
-
 
 def minimizeWindow():
     root.withdraw()
