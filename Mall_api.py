@@ -87,10 +87,9 @@ async def post_request():
                 }
         async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
         
-            response = await session.post(url, data=json_data, headers=headers, timeout=60)
+            response = await session.post(url, data=json_data, headers=headers)
             res = await response.json()
-            # res = json.loads(res)
-            
+            await asyncio.sleep(0)
             if response.ok:
                 result = controller.post_data(res)
                 if result==None:
@@ -108,8 +107,9 @@ async def post_request():
                     url2 = f"http://{hq_ip}:{port}/api/post-maintenance"
                     postData={}
                     postData["mallcode"]=code
-                    response2 = await session.post(url2, data=json.dumps(postData), headers=headers, timeout=60)
+                    response2 = await session.post(url2, data=json.dumps(postData), headers=headers)
                     responseData = await response2.json()
+                    await asyncio.sleep(0)
                     res = json.loads(responseData)
                     if response2.ok:
                         if res['status']==0:
@@ -196,7 +196,7 @@ load_frame1('Not started.')
 # schedule.every(2).seconds.do(load_frame1)
 try:
     # schedule.every(scheduleStart).seconds.do(trigger)
-    schedule.every(scheduleStart).minutes.do(trigger)
+    schedule.every(scheduleStart).seconds.do(trigger)
     # schedule.every(scheduleStart).minutes.do(schedule_start)
 
     def check_schedule():
@@ -211,16 +211,16 @@ except Exception as e:
 start_time = time.time()
 
 
-# def minimizeWindow():
-#     root.withdraw()
-#     root.overrideredirect(False)
-#     root.iconify()
+def minimizeWindow():
+    root.withdraw()
+    root.overrideredirect(False)
+    root.iconify()
 
-# def disable_event():
-#     pass
+def disable_event():
+    pass
 
-# root.resizable(False, False)
-# root.protocol("WM_DELETE_WINDOW", minimizeWindow)
+root.resizable(False, False)
+root.protocol("WM_DELETE_WINDOW", minimizeWindow)
 
 # run app
 root.mainloop()
