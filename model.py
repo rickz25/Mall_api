@@ -1,18 +1,27 @@
 from db import SQLServer
+import configparser
+config = configparser.ConfigParser()
+config.read(r'settings/config.txt') 
+
+bulklimit =  config.get('mall_config', 'bulk_limit')
+if bulklimit == "":
+    bulklimit=100
+else:
+   bulklimit = int(bulklimit)
 db = SQLServer()        
 class TaskModel:
 
     def getMappingHeader(self):
-        sql="SELECT TOP (100) HEADER_ID,TEMPLATE,TRN_DATE,MERCHANT_CODE,POS_VENDOR_CODE,CREATED_AT,LAST_MODIFIED,SUBMISSION_FLAG,MALL_CODE,TAG FROM dbo.header_sales mh WHERE CAST(mh.LAST_MODIFIED AS DATE)=CAST(GETDATE() AS DATE) AND mh.TAG=0;"
+        sql=f"SELECT TOP ({bulklimit}) HEADER_ID,TEMPLATE,TRN_DATE,MERCHANT_CODE,POS_VENDOR_CODE,CREATED_AT,LAST_MODIFIED,SUBMISSION_FLAG,MALL_CODE,TAG FROM dbo.header_sales mh WHERE mh.TAG=0 ORDER BY mh.LAST_MODIFIED ASC;"
         return db.fetchAll(sql)
     def getTransaction(self):
-        sql="SELECT * FROM dbo.hourly_sales WHERE POS_AGENT_MAPPING_HEADER IN (SELECT TOP (100) HEADER_ID FROM dbo.header_sales mh WHERE CAST(mh.LAST_MODIFIED AS DATE)=CAST(GETDATE() AS DATE) AND mh.TAG=0);"
+        sql=f"SELECT * FROM dbo.hourly_sales WHERE POS_AGENT_MAPPING_HEADER IN (SELECT TOP ({bulklimit}) HEADER_ID FROM dbo.header_sales mh WHERE mh.TAG=0 ORDER BY mh.LAST_MODIFIED ASC);"
         return db.fetchAll(sql)
     def getDaily(self):
-        sql="SELECT * FROM dbo.eod_sales WHERE POS_AGENT_MAPPING_HEADER IN (SELECT TOP (100) HEADER_ID FROM dbo.header_sales mh WHERE CAST(mh.LAST_MODIFIED AS DATE)=CAST(GETDATE() AS DATE) AND mh.TAG=0);"
+        sql=f"SELECT * FROM dbo.eod_sales WHERE POS_AGENT_MAPPING_HEADER IN (SELECT TOP ({bulklimit}) HEADER_ID FROM dbo.header_sales mh WHERE mh.TAG=0 ORDER BY mh.LAST_MODIFIED ASC);"
         return db.fetchAll(sql)
     def getMappingLogs(self):
-        sql="SELECT TOP (100) STATUS, MESSAGE, TEXT, TEMPLATE, TRN_DATE, FILENAME, MERCHANT_CODE, STORE_NAME, MALL_CODE, TERMINAL_NO, IS_NULL_ERROR, VALIDATED_AT, TAG FROM dbo.mapping_log WHERE STATUS=0 AND CAST(VALIDATED_AT AS DATE)=CAST(GETDATE() AS DATE) AND TAG=0;"
+        sql=f"SELECT TOP ({bulklimit}) STATUS, MESSAGE, TEXT, TEMPLATE, TRN_DATE, FILENAME, MERCHANT_CODE, STORE_NAME, MALL_CODE, TERMINAL_NO, IS_NULL_ERROR, VALIDATED_AT, TAG FROM dbo.mapping_log WHERE STATUS=0 AND TAG=0 ORDER BY VALIDATED_AT ASC;"
         return db.fetchAll(sql)
     def postMappingHeader(self, param):
         sql=f"UPDATE dbo.header_sales SET TAG=1 WHERE HEADER_ID = {param}"

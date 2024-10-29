@@ -2,7 +2,10 @@
 
 #IP and port of Mall "192.168.1.1"
 HQ_IP=192.168.153.1
+
+#Port
 Port=444
+
 #for multiple Mall, Mall_Code=7,22 otherwise Mall_Code=7
 Mall_Code=7,22
 
@@ -29,3 +32,6 @@ db_password=
 
 #Additional details
 db_add_details=TrustServerCertificate=yes;Trusted_Connection=yes;
+
+#Bulk limit
+bulk_limit=100

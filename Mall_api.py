@@ -1,8 +1,6 @@
 from tkinter import *
 from PIL import ImageTk
-from tkinter import messagebox
 from tkinter.font import Font
-import subprocess, platform
 import socket
 import schedule
 import time
@@ -79,19 +77,16 @@ def load_frame1(param):
 # Function sync for sales
 async def post_request():
         url = f"http://{hq_ip}:{port}/api/post-sales-integration"
-        
         json_data = controller.get_data()
-       
         headers = {
                     "Content-Type": "application/json",
                     "Authorization": token
                 }
         async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
-        
             response = await session.post(url, data=json_data, headers=headers)
-            res = await response.json()
-            await asyncio.sleep(0)
+            # await asyncio.sleep(0)
             if response.ok:
+                res = await response.json()
                 result = controller.post_data(res)
             else:
                 logger.exception("Exception occurred: %s", str(result))
@@ -99,13 +94,11 @@ async def post_request():
 
 # Function sync for maintenance
 async def request_maintenance():
-      
         headers = {
                     "Content-Type": "application/json",
                     "Authorization": token
                 }
         async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
-        
             if maintenance_sync ==1:
                 global mallcode
                 mallcode = mallcode.replace(" ", "")
@@ -132,7 +125,7 @@ async def main():
     result = sock.connect_ex((hq_ip, int(port)))
     if result == 0:
         load_frame1('Syncing...')
-        print('sync')
+        # print('sync')
     else:
         load_frame1('Waiting for a connection, Server Started.')
         return
@@ -203,26 +196,28 @@ root.grid_columnconfigure(0, weight=1)
 # place frame widgets in window
 frame1.grid(row=0, column=0, sticky="nsew")
     
-
 # load the first frame
 load_frame1('Not started.')
 
 
 ##Schedule cron job
-# try:
-schedule.every(scheduleStart).seconds.do(trigger)
-# schedule.every(scheduleStart).minutes.do(schedule_start)
+try:
+    schedule.every(scheduleStart).seconds.do(trigger)
+    # schedule.every(scheduleStart).minutes.do(schedule_start)
 
-def check_schedule():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    def check_schedule():
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
-threading.Thread(target=check_schedule, daemon=True).start()
-# except Exception as e:
-#    logger.error('Error at %s', 'Scheduler', exc_info=e)
+    threading.Thread(target=check_schedule, daemon=True).start()
+except Exception as e:
+   logger.error('Error at %s', 'Scheduler', exc_info=e)
 
-start_time = time.time()
+# start_time = time.time()
+
+logging.getLogger('schedule').setLevel(logging.WARNING)
+logging.getLogger('asyncio').setLevel(logging.WARNING)
 
 def minimizeWindow():
     root.withdraw()
