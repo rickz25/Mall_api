@@ -16,6 +16,8 @@ import json
 import aiohttp
 import asyncio
 import socket
+from timeit import default_timer as timer
+from datetime import timedelta
 
 # Create instances of Model, View, and Controller
 model = TaskModel()
@@ -76,6 +78,7 @@ def load_frame1(param):
 
 # Function sync for sales
 async def post_request():
+        start = timer()
         url = f"http://{hq_ip}:{port}/api/post-sales-integration"
         json_data = controller.get_data()
         headers = {
@@ -84,10 +87,12 @@ async def post_request():
                 }
         async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
             response = await session.post(url, data=json_data, headers=headers)
-            # await asyncio.sleep(0)
+            await asyncio.sleep(1)
             if response.ok:
                 res = await response.json()
                 result = controller.post_data(res)
+                end = timer()
+                print(timedelta(seconds=end-start))
             else:
                 logger.exception("Exception occurred: %s", str(result))
                 load_frame1('Server Error.')
@@ -108,7 +113,7 @@ async def request_maintenance():
                     postData["mallcode"]=code
                     response2 = await session.post(url, data=json.dumps(postData), headers=headers)
                     responseData = await response2.json()
-                    await asyncio.sleep(0)
+                    await asyncio.sleep(5)
                     res = json.loads(responseData)
                     if response2.ok:
                         if res['status']==0:
@@ -216,7 +221,7 @@ except Exception as e:
 
 # start_time = time.time()
 
-logging.getLogger('schedule').setLevel(logging.WARNING)
+# logging.getLogger('schedule').setLevel(logging.WARNING)
 logging.getLogger('asyncio').setLevel(logging.WARNING)
 
 def minimizeWindow():

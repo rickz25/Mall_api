@@ -39,6 +39,9 @@ class TaskController:
             if response['status']==0:
                 for m in response['data']['header']:
                     self.model.postMappingHeader(m)
+                for l in response['data']['daily']:
+                    x=l.split("_")
+                    self.model.postDailyMapping(x)
                 for l in response['data']['logs']:
                     x=l.split("_")
                     self.model.postMappingLogs(x)
