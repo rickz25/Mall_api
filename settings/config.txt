@@ -13,7 +13,7 @@ Mall_Code=7,22
 Maintenance_sync=1
 
 #schedule task per second
-task_schedule=20
+task_schedule=2
 
 #DB Driver
 db_driver=ODBC Driver 17 for SQL Server

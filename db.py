@@ -1,6 +1,7 @@
 import sqlite3
 import pyodbc
 import configparser
+import time
 
 config = configparser.ConfigParser()
 config.read(r'settings/config.txt') 
@@ -36,12 +37,6 @@ class LiteDB:
 
 class SQLServer:
     def __init__(self):
-        # db = LiteDB('app/db/db.sqlite')
-        # record = db.fetchSetting()
-        # server =record[1]
-        # database = record[2]
-        # user = record[3]
-        # pd = record[4]
         driver=config.get('mall_config', 'db_driver')
         server =config.get('mall_config', 'db_host')
         database = config.get('mall_config', 'db_name')
@@ -60,24 +55,62 @@ class SQLServer:
         self.cursor.execute(sql)
         return self.cursor.fetchone()
     def fetchAll(self,sql):
-        self.cursor.execute(sql)
-        columns = [column[0] for column in  self.cursor.description]
-        results = []
-        for row in  self.cursor.fetchall():
-         results.append(dict(zip(columns, row)))
-        return results
+        retry_flag = 3
+        retry_count = 0
+        while retry_count < retry_flag:
+            try:
+                self.cursor.execute(sql)
+                columns = [column[0] for column in  self.cursor.description]
+                results = []
+                for row in  self.cursor.fetchall():
+                    results.append(dict(zip(columns, row)))
+                return results
+            except Exception as e:
+                retry_count = retry_count + 1
+                time.sleep(1)
     def insert(self, statement):
-        self.cursor.execute(statement)
-        self.conn.commit()
+        retry_flag = 3
+        retry_count = 0
+        while retry_count < retry_flag:
+            try:
+                self.cursor.execute(statement)
+                self.conn.commit()
+                break
+            except Exception as e:
+                retry_count = retry_count + 1
+                time.sleep(1)
     def update(self, statement):
-        self.cursor.execute(statement)
-        self.conn.commit()
+        retry_flag = 3
+        retry_count = 0
+        while retry_count < retry_flag:
+            try:
+                self.cursor.execute(statement)
+                self.conn.commit()
+                break
+            except Exception as e:
+                retry_count = retry_count + 1
+                time.sleep(1)
     def remove(self, statement):
-        self.cursor.execute(statement)
-        self.conn.commit()
+        retry_flag = 3
+        retry_count = 0
+        while retry_count < retry_flag:
+            try:
+                self.cursor.execute(statement)
+                self.conn.commit()
+                break
+            except Exception as e:
+                retry_count = retry_count + 1
+                time.sleep(1)
     def selectColumn(self,sql):
-        self.cursor.execute(sql)
-        return self.cursor.fetchall()
+        retry_flag = 3
+        retry_count = 0
+        while retry_count < retry_flag:
+            try:
+                self.cursor.execute(sql)
+                return self.cursor.fetchall()
+            except Exception as e:
+                retry_count = retry_count + 1
+                time.sleep(1)
     def rows(self):
         return self.cursor.rowcount
 

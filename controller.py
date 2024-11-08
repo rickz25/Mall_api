@@ -2,6 +2,25 @@ from model import TaskModel
 import json
 from datetime import date, datetime
 from decimal import Decimal
+import logging
+import configparser
+from itertools import islice
+
+# Create and configure logger
+logging.basicConfig(filename="Logs/unoLog/logs.log",
+                    format='%(asctime)s %(message)s',
+                    filemode='w')
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+config = configparser.ConfigParser()
+config.read(r'settings/config.txt') 
+
+bulklimit =  config.get('mall_config', 'bulk_limit')
+if bulklimit == "":
+    bulklimit=100
+else:
+   bulklimit = int(bulklimit)
 
 # convertion of datetime and decimal
 def default(obj):
@@ -16,22 +35,26 @@ class TaskController:
         self.model = model
     
     def get_data(self):
-        DataArray={}
-        DataArray['MappingHeader'] = self.model.getMappingHeader()
-        TransactionData = self.model.getTransaction()
-        Daily = self.model.getDaily()
-        
-        if DataArray['MappingHeader']:
-            DataArray['MappingHeader'][0]['MALL_CODE']
-            mall_code_obj = {"MALL_CODE":DataArray['MappingHeader'][0]['MALL_CODE']}
-            for t in TransactionData:
-                t.update(mall_code_obj)
-            for d in Daily:
-                d.update(mall_code_obj)
-        DataArray['TransactionMapping'] = TransactionData
-        DataArray['DailyMapping'] = Daily
-        DataArray['MappingLogs'] = self.model.getMappingLogs()
-        return json.dumps(DataArray, default=default)
+        try:
+            DataArray={}
+            DataArray['MappingHeader'] = self.model.getMappingHeader()
+            TransactionData = self.model.getTransaction()
+            Daily = self.model.getDaily()
+            
+            # if DataArray['MappingHeader']:
+            #     DataArray['MappingHeader'][0]['MALL_CODE']
+            #     mall_code_obj = {"MALL_CODE":DataArray['MappingHeader'][0]['MALL_CODE']}
+            #     for t in TransactionData:
+            #         t.update(mall_code_obj)
+            #     for d in Daily:
+            #         d.update(mall_code_obj)
+            DataArray['TransactionMapping'] = TransactionData
+            DataArray['DailyMapping'] = Daily
+            DataArray['MappingLogs'] = self.model.getMappingLogs()
+            return json.dumps(DataArray, default=default)
+        except Exception as e:
+                str_error = str(e)
+                logger.exception("Exception occurred: %s", str_error)
     
     def post_data(self, response):
         str_error=None
@@ -47,6 +70,7 @@ class TaskController:
                     self.model.postMappingLogs(x)
         except Exception as e:
             str_error = str(e)
+            logger.exception("Exception occurred: %s", str_error)
         return str_error
     
     def post_maintenance(self, response):
@@ -288,6 +312,14 @@ class TaskController:
         except Exception as e:
             str_error += str(e)
         return str_error
+    
+def batched(iterable, n):
+    # batched('ABCDEFG', 3) → ABC DEF G
+    if n < 1:
+        raise ValueError('n must be at least one')
+    iterator = iter(iterable)
+    while batch := tuple(islice(iterator, n)):
+        yield batch
 
             
         

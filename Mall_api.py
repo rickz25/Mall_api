@@ -18,6 +18,22 @@ import asyncio
 import socket
 from timeit import default_timer as timer
 from datetime import timedelta
+import psutil
+import os
+
+# kill process when double run the program
+process_to_kill = "Mall_api.exe"
+
+# get PID of the current process
+my_pid = os.getpid()
+
+# iterate through all running processes
+for p in psutil.process_iter():
+    # if it's process we're looking for...
+    if p.name() == process_to_kill:
+        # and if the process has a different PID than the current process, kill it
+        if not p.pid == my_pid:
+            p.terminate()
 
 # Create instances of Model, View, and Controller
 model = TaskModel()
@@ -65,6 +81,16 @@ def clear_widgets(frame):
     # select all frame widgets and delete them
     for widget in frame.winfo_children():
         widget.destroy()
+
+#Telnet
+def telnet2(ip, port):
+	s = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
+	try:
+		s.connect((ip , int(port)))
+		s.shutdown(2)
+		return True
+	except:
+		return False 
 
 
 def load_frame1(param):
@@ -125,16 +151,6 @@ async def request_maintenance():
                         load_frame1('Server Error.')
 
 async def main():
-    # check if the server is down or up
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex((hq_ip, int(port)))
-    if result == 0:
-        load_frame1('Syncing...')
-        # print('sync')
-    else:
-        load_frame1('Waiting for a connection, Server Started.')
-        return
-    
     # Gather task to sync and wait the other process
     try:
         await asyncio.gather(post_request(), request_maintenance())
@@ -144,7 +160,15 @@ async def main():
         await asyncio.gather(post_request())
 
 def trigger():
-     asyncio.run(main())
+    result = telnet2(hq_ip, int(port)) 
+    if result:
+        load_frame1('Syncing...')
+        print('sync')
+    else:
+        load_frame1('Waiting for a connection, Server Started.')
+        print('not sync')
+        return
+    asyncio.run(main())
         
 # initiallize app with basic settings
 root = Tk()
@@ -224,16 +248,16 @@ except Exception as e:
 # logging.getLogger('schedule').setLevel(logging.WARNING)
 logging.getLogger('asyncio').setLevel(logging.WARNING)
 
-def minimizeWindow():
-    root.withdraw()
-    root.overrideredirect(False)
-    root.iconify()
+# def minimizeWindow():
+#     root.withdraw()
+#     root.overrideredirect(False)
+#     root.iconify()
 
-def disable_event():
-    pass
+# def disable_event():
+#     pass
 
-root.resizable(False, False)
-root.protocol("WM_DELETE_WINDOW", minimizeWindow)
+# root.resizable(False, False)
+# root.protocol("WM_DELETE_WINDOW", minimizeWindow)
 
 # run app
 root.mainloop()
