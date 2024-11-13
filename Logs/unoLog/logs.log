@@ -1,6 +1,4 @@
-2024-11-08 18:25:42,283 STREAM b'IHDR' 16 13
-2024-11-08 18:25:42,283 STREAM b'sRGB' 41 1
-2024-11-08 18:25:42,284 STREAM b'gAMA' 54 4
-2024-11-08 18:25:42,284 STREAM b'IDAT' 70 65466
-2024-11-08 18:25:44,300 Running job Job(interval=2, unit=seconds, do=trigger, args=(), kwargs={})
-2024-11-08 18:25:58,933 Running job Job(interval=2, unit=seconds, do=trigger, args=(), kwargs={})
+2024-11-13 10:48:02,415 STREAM b'IHDR' 16 13
+2024-11-13 10:48:02,416 STREAM b'sRGB' 41 1
+2024-11-13 10:48:02,416 STREAM b'gAMA' 54 4
+2024-11-13 10:48:02,416 STREAM b'IDAT' 70 65466

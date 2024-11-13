@@ -16,8 +16,6 @@ import json
 import aiohttp
 import asyncio
 import socket
-from timeit import default_timer as timer
-from datetime import timedelta
 import psutil
 import os
 
@@ -104,51 +102,56 @@ def load_frame1(param):
 
 # Function sync for sales
 async def post_request():
-        start = timer()
-        url = f"http://{hq_ip}:{port}/api/post-sales-integration"
-        json_data = controller.get_data()
-        headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                }
-        async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
-            response = await session.post(url, data=json_data, headers=headers)
-            await asyncio.sleep(1)
-            if response.ok:
-                res = await response.json()
-                result = controller.post_data(res)
-                end = timer()
-                print(timedelta(seconds=end-start))
-            else:
-                logger.exception("Exception occurred: %s", str(result))
-                load_frame1('Server Error.')
+        try:
+            url = f"http://{hq_ip}:{port}/api/post-sales-integration"
+            json_data = controller.get_data()
+            headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": token
+                    }
+            conn = aiohttp.TCPConnector(limit=0)
+            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn) as session:
+                response = await session.post(url, data=json_data, headers=headers)
+                await asyncio.sleep(1)
+                if response.ok:
+                    res = await response.json()
+                    result = controller.post_data(res)
+                else:
+                    logger.exception("Exception occurred: %s", str(result))
+                    load_frame1('Server Error.')
+        except Exception as e:
+            logger.exception("Exception occurred: %s", str(e))
 
 # Function sync for maintenance
 async def request_maintenance():
-        headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": token
-                }
-        async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10) as session:
-            if maintenance_sync ==1:
-                global mallcode
-                mallcode = mallcode.replace(" ", "")
-                for code in mallcode.split(","):
-                    url = f"http://{hq_ip}:{port}/api/post-maintenance"
-                    postData={}
-                    postData["mallcode"]=code
-                    response2 = await session.post(url, data=json.dumps(postData), headers=headers)
-                    responseData = await response2.json()
-                    await asyncio.sleep(5)
-                    res = json.loads(responseData)
-                    if response2.ok:
-                        if res['status']==0:
-                            result = controller.post_maintenance(res)
+        try:
+            headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": token
+                    }
+            conn = aiohttp.TCPConnector(limit=0)
+            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn) as session:
+                if maintenance_sync ==1:
+                    global mallcode
+                    mallcode = mallcode.replace(" ", "")
+                    for code in mallcode.split(","):
+                        url = f"http://{hq_ip}:{port}/api/post-maintenance"
+                        postData={}
+                        postData["mallcode"]=code
+                        response2 = await session.post(url, data=json.dumps(postData), headers=headers)
+                        responseData = await response2.json()
+                        await asyncio.sleep(5)
+                        res = json.loads(responseData)
+                        if response2.ok:
+                            if res['status']==0:
+                                result = controller.post_maintenance(res)
+                            else:
+                                logger.exception("Exception occurred: %s", res['message'])
                         else:
-                            logger.exception("Exception occurred: %s", res['message'])
-                    else:
-                        logger.exception("Exception occurred: %s", str(result))
-                        load_frame1('Server Error.')
+                            logger.exception("Exception occurred: %s", str(result))
+                            load_frame1('Server Error.')
+        except Exception as e:
+            logger.exception("Exception occurred: %s", str(e))
 
 async def main():
     # Gather task to sync and wait the other process
@@ -245,19 +248,19 @@ except Exception as e:
 
 # start_time = time.time()
 
-# logging.getLogger('schedule').setLevel(logging.WARNING)
+logging.getLogger('schedule').setLevel(logging.WARNING)
 logging.getLogger('asyncio').setLevel(logging.WARNING)
 
-# def minimizeWindow():
-#     root.withdraw()
-#     root.overrideredirect(False)
-#     root.iconify()
+def minimizeWindow():
+    root.withdraw()
+    root.overrideredirect(False)
+    root.iconify()
 
-# def disable_event():
-#     pass
+def disable_event():
+    pass
 
-# root.resizable(False, False)
-# root.protocol("WM_DELETE_WINDOW", minimizeWindow)
+root.resizable(False, False)
+root.protocol("WM_DELETE_WINDOW", minimizeWindow)
 
 # run app
 root.mainloop()

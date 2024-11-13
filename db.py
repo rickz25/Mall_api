@@ -10,8 +10,6 @@ class LiteDB:
     def __init__(self, db):
         self.conn = sqlite3.connect(db,check_same_thread=False)
         self.cur = self.conn.cursor()
-        # self.cur.execute(
-        #     "CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY, part text, customer text, retailer text, price text)")
         self.conn.commit()
 
     def fetchSetting(self):
