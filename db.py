@@ -2,8 +2,16 @@ import sqlite3
 import pyodbc
 import configparser
 import time
+import logging
 
-config = configparser.ConfigParser()
+# Create and configure logger
+logging.basicConfig(filename="Logs/unoLog/logs.log",
+                    format='%(asctime)s %(message)s',
+                    filemode='w')
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+config = configparser.RawConfigParser()
 config.read(r'settings/config.txt') 
 
 class LiteDB:
@@ -47,30 +55,57 @@ class SQLServer:
                     f"{add_details}"
                     f"uid={user};"
                     f"pwd={pd};")
-        self.cursor = self.conn.cursor()
 
     def fetchOne(self,sql):
+        self.cursor = self.conn.cursor()
         self.cursor.execute(sql)
         return self.cursor.fetchone()
     def fetchAll(self,sql):
-        retry_flag = 3
-        retry_count = 0
-        while retry_count < retry_flag:
+        # retry_flag = 3
+        # retry_count = 0
+        # while retry_count < retry_flag:
+        #     try:
+        #         self.cursor = self.conn.cursor()
+        #         self.cursor.execute(sql)
+        #         columns = [column[0] for column in  self.cursor.description]
+        #         results = []
+        #         for row in  self.cursor.fetchall():
+        #             results.append(dict(zip(columns, row)))
+        #         return results
+        #     except Exception as e:
+        #         retry_count = retry_count + 1
+        #         time.sleep(1)
+
+
+        connection = None
+        while True:
+            # time.sleep(1)
+            if not connection:  # No connection yet? Connect.
+               self.cursor = self.conn.cursor()
             try:
                 self.cursor.execute(sql)
                 columns = [column[0] for column in  self.cursor.description]
                 results = []
-                for row in  self.cursor.fetchall():
+                for row in self.cursor.fetchall():
                     results.append(dict(zip(columns, row)))
                 return results
-            except Exception as e:
-                retry_count = retry_count + 1
-                time.sleep(1)
+            except pyodbc.Error as pe:
+                if pe.args[0] == "08S01":  # Communication error.
+                    # Nuke the connection and retry.
+                    try:
+                        self.conn.close()
+                    except:
+                        pass
+                    connection = None
+                    continue
+                raise logger.exception("Exception occurred: %s", pe)
+
     def insert(self, statement):
         retry_flag = 3
         retry_count = 0
         while retry_count < retry_flag:
             try:
+                self.cursor = self.conn.cursor()
                 self.cursor.execute(statement)
                 self.conn.commit()
                 break
@@ -82,6 +117,7 @@ class SQLServer:
         retry_count = 0
         while retry_count < retry_flag:
             try:
+                self.cursor = self.conn.cursor()
                 self.cursor.execute(statement)
                 self.conn.commit()
                 break
@@ -93,6 +129,7 @@ class SQLServer:
         retry_count = 0
         while retry_count < retry_flag:
             try:
+                self.cursor = self.conn.cursor()
                 self.cursor.execute(statement)
                 self.conn.commit()
                 break
@@ -104,12 +141,14 @@ class SQLServer:
         retry_count = 0
         while retry_count < retry_flag:
             try:
+                self.cursor = self.conn.cursor()
                 self.cursor.execute(sql)
                 return self.cursor.fetchall()
             except Exception as e:
                 retry_count = retry_count + 1
                 time.sleep(1)
     def rows(self):
+        self.cursor = self.conn.cursor()
         return self.cursor.rowcount
 
     # def __del__(self):

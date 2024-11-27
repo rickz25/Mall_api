@@ -25,6 +25,7 @@ imports:
  &#8226;   <a href="#_weakrefset">_weakrefset</a>
  &#8226;   <a href="#abc">abc</a>
  &#8226;   <a href="#aiohttp">aiohttp</a>
+ &#8226;   <a href="#aiohttp_retry">aiohttp_retry</a>
  &#8226;   <a href="#asyncio">asyncio</a>
  &#8226;   <a href="#codecs">codecs</a>
  &#8226;   <a href="#collections">collections</a>
@@ -2790,6 +2791,8 @@ imported by:
  &#8226;   <a href="#PIL._util">PIL._util</a>
  &#8226;   <a href="#PIL._version">PIL._version</a>
  &#8226;   <a href="#PIL.features">PIL.features</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
  &#8226;   <a href="#attr.exceptions">attr.exceptions</a>
  &#8226;   <a href="#codeop">codeop</a>
  &#8226;   <a href="#doctest">doctest</a>
@@ -3969,6 +3972,8 @@ imported by:
  &#8226;   <a href="#aiohttp.web_routedef">aiohttp.web_routedef</a>
  &#8226;   <a href="#aiohttp.web_runner">aiohttp.web_runner</a>
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
  &#8226;   <a href="#attr._make">attr._make</a>
  &#8226;   <a href="#contextlib">contextlib</a>
  &#8226;   <a href="#dataclasses">dataclasses</a>
@@ -4089,6 +4094,8 @@ imported by:
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
  &#8226;   <a href="#aiohttp.web_ws">aiohttp.web_ws</a>
  &#8226;   <a href="#aiohttp.worker">aiohttp.worker</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
 
   </div>
 
@@ -4565,6 +4572,7 @@ imported by:
  &#8226;   <a href="#aiohttp.web_routedef">aiohttp.web_routedef</a>
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
  &#8226;   <a href="#aiohttp.web_ws">aiohttp.web_ws</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
 
   </div>
 
@@ -5081,6 +5089,7 @@ imported by:
  &#8226;   <a href="#aiohttp.web_runner">aiohttp.web_runner</a>
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
  &#8226;   <a href="#aiohttp.web_ws">aiohttp.web_ws</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
 
   </div>
 
@@ -5635,6 +5644,78 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="aiohttp_retry"></a>
+  <a target="code" href="///C:/Users/rickz/AppData/Local/Programs/Python/Python312/Lib/site-packages/aiohttp_retry/__init__.py" type="text/plain"><tt>aiohttp_retry</tt></a>
+<span class="moduletype">Package</span>  <div class="import">
+imports:
+    <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#Mall_api.py">Mall_api.py</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="aiohttp_retry.client"></a>
+  <a target="code" href="///C:/Users/rickz/AppData/Local/Programs/Python/Python312/Lib/site-packages/aiohttp_retry/client.py" type="text/plain"><tt>aiohttp_retry.client</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#__future__">__future__</a>
+ &#8226;   <a href="#abc">abc</a>
+ &#8226;   <a href="#aiohttp">aiohttp</a>
+ &#8226;   <a href="#aiohttp.hdrs">aiohttp.hdrs</a>
+ &#8226;   <a href="#aiohttp.typedefs">aiohttp.typedefs</a>
+ &#8226;   <a href="#aiohttp_retry">aiohttp_retry</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
+ &#8226;   <a href="#asyncio">asyncio</a>
+ &#8226;   <a href="#dataclasses">dataclasses</a>
+ &#8226;   <a href="#logging">logging</a>
+ &#8226;   <a href="#sys">sys</a>
+ &#8226;   <a href="#types">types</a>
+ &#8226;   <a href="#typing">typing</a>
+ &#8226;   <a href="#typing_extensions">typing_extensions</a>
+ &#8226;   <a href="#yarl">yarl</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#aiohttp_retry">aiohttp_retry</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="aiohttp_retry.retry_options"></a>
+  <a target="code" href="///C:/Users/rickz/AppData/Local/Programs/Python/Python312/Lib/site-packages/aiohttp_retry/retry_options.py" type="text/plain"><tt>aiohttp_retry.retry_options</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#__future__">__future__</a>
+ &#8226;   <a href="#abc">abc</a>
+ &#8226;   <a href="#aiohttp">aiohttp</a>
+ &#8226;   <a href="#aiohttp_retry">aiohttp_retry</a>
+ &#8226;   <a href="#random">random</a>
+ &#8226;   <a href="#typing">typing</a>
+ &#8226;   <a href="#warnings">warnings</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#aiohttp_retry">aiohttp_retry</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="aiosignal"></a>
   <a target="code" href="///C:/Users/rickz/AppData/Local/Programs/Python/Python312/Lib/site-packages/aiosignal/__init__.py" type="text/plain"><tt>aiosignal</tt></a>
 <span class="moduletype">Package</span>  <div class="import">
@@ -5825,6 +5906,7 @@ imported by:
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
  &#8226;   <a href="#aiohttp.web_ws">aiohttp.web_ws</a>
  &#8226;   <a href="#aiohttp.worker">aiohttp.worker</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
  &#8226;   <a href="#asyncio">asyncio</a>
  &#8226;   <a href="#asyncio.base_events">asyncio.base_events</a>
  &#8226;   <a href="#asyncio.base_futures">asyncio.base_futures</a>
@@ -8739,7 +8821,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#numpy.array_api._data_type_functions">numpy.array_api._data_type_functions</a>
+    <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+ &#8226;   <a href="#numpy.array_api._data_type_functions">numpy.array_api._data_type_functions</a>
  &#8226;   <a href="#packaging._tokenizer">packaging._tokenizer</a>
  &#8226;   <a href="#pkg_resources._vendor.packaging._tokenizer">pkg_resources._vendor.packaging._tokenizer</a>
  &#8226;   <a href="#pprint">pprint</a>
@@ -8796,6 +8879,7 @@ imported by:
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
     <a href="#configparser">configparser</a>
+ &#8226;   <a href="#logging">logging</a>
  &#8226;   <a href="#pyodbc">pyodbc</a>
  &#8226;   <a href="#sqlite3">sqlite3</a>
  &#8226;   <a href="#time">time</a>
@@ -13495,6 +13579,7 @@ imports:
  &#8226;   <a href="#importlib">importlib</a>
  &#8226;   <a href="#importlib._bootstrap">importlib._bootstrap</a>
  &#8226;   <a href="#importlib._bootstrap_external">importlib._bootstrap_external</a>
+ &#8226;   <a href="#importlib.machinery">importlib.machinery</a>
  &#8226;   <a href="#sys">sys</a>
  &#8226;   <a href="#warnings">warnings</a>
 
@@ -13645,6 +13730,7 @@ imported by:
     <a href="#cffi._imp_emulation">cffi._imp_emulation</a>
  &#8226;   <a href="#cffi.verifier">cffi.verifier</a>
  &#8226;   <a href="#ctypes.util">ctypes.util</a>
+ &#8226;   <a href="#importlib">importlib</a>
  &#8226;   <a href="#importlib.abc">importlib.abc</a>
  &#8226;   <a href="#inspect">inspect</a>
  &#8226;   <a href="#numpy.compat.py3k">numpy.compat.py3k</a>
@@ -14300,6 +14386,7 @@ imported by:
  &#8226;   <a href="#importlib.resources.abc">importlib.resources.abc</a>
  &#8226;   <a href="#importlib.resources.readers">importlib.resources.readers</a>
  &#8226;   <a href="#inspect">inspect</a>
+ &#8226;   <a href="#model">model</a>
  &#8226;   <a href="#multiprocessing.connection">multiprocessing.connection</a>
  &#8226;   <a href="#multiprocessing.pool">multiprocessing.pool</a>
  &#8226;   <a href="#multiprocessing.process">multiprocessing.process</a>
@@ -14594,10 +14681,12 @@ imported by:
  &#8226;   <a href="#aiohttp.web_app">aiohttp.web_app</a>
  &#8226;   <a href="#aiohttp.web_log">aiohttp.web_log</a>
  &#8226;   <a href="#aiohttp.web_protocol">aiohttp.web_protocol</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
  &#8226;   <a href="#asyncio.futures">asyncio.futures</a>
  &#8226;   <a href="#asyncio.log">asyncio.log</a>
  &#8226;   <a href="#concurrent.futures._base">concurrent.futures._base</a>
  &#8226;   <a href="#controller">controller</a>
+ &#8226;   <a href="#db">db</a>
  &#8226;   <a href="#hashlib">hashlib</a>
  &#8226;   <a href="#http.cookiejar">http.cookiejar</a>
  &#8226;   <a href="#model">model</a>
@@ -14745,6 +14834,7 @@ imported by:
 imports:
     <a href="#configparser">configparser</a>
  &#8226;   <a href="#db">db</a>
+ &#8226;   <a href="#itertools">itertools</a>
  &#8226;   <a href="#logging">logging</a>
 
   </div>
@@ -23885,6 +23975,7 @@ imported by:
     <a href="#PIL.ImagePalette">PIL.ImagePalette</a>
  &#8226;   <a href="#aiohttp.connector">aiohttp.connector</a>
  &#8226;   <a href="#aiohttp.http_websocket">aiohttp.http_websocket</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
  &#8226;   <a href="#email.generator">email.generator</a>
  &#8226;   <a href="#email.utils">email.utils</a>
  &#8226;   <a href="#pkg_resources._vendor.more_itertools.more">pkg_resources._vendor.more_itertools.more</a>
@@ -29339,6 +29430,7 @@ imported by:
  &#8226;   <a href="#aiohttp.web">aiohttp.web</a>
  &#8226;   <a href="#aiohttp.web_ws">aiohttp.web_ws</a>
  &#8226;   <a href="#aiohttp.worker">aiohttp.worker</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
  &#8226;   <a href="#argparse">argparse</a>
  &#8226;   <a href="#ast">ast</a>
  &#8226;   <a href="#asyncio">asyncio</a>
@@ -30255,6 +30347,7 @@ imported by:
  &#8226;   <a href="#aiohttp.web_request">aiohttp.web_request</a>
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
  &#8226;   <a href="#aiohttp.worker">aiohttp.worker</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
  &#8226;   <a href="#asyncio.coroutines">asyncio.coroutines</a>
  &#8226;   <a href="#asyncio.futures">asyncio.futures</a>
  &#8226;   <a href="#asyncio.queues">asyncio.queues</a>
@@ -30419,6 +30512,8 @@ imported by:
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
  &#8226;   <a href="#aiohttp.web_ws">aiohttp.web_ws</a>
  &#8226;   <a href="#aiohttp.worker">aiohttp.worker</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
  &#8226;   <a href="#asyncio.staggered">asyncio.staggered</a>
  &#8226;   <a href="#asyncio.timeouts">asyncio.timeouts</a>
  &#8226;   <a href="#attr">attr</a>
@@ -30581,6 +30676,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#PIL._typing">PIL._typing</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
  &#8226;   <a href="#attr._compat">attr._compat</a>
  &#8226;   <a href="#packaging.metadata">packaging.metadata</a>
  &#8226;   <a href="#pkg_resources._vendor.packaging.metadata">pkg_resources._vendor.packaging.metadata</a>
@@ -31168,6 +31264,7 @@ imported by:
  &#8226;   <a href="#aiohttp.web_response">aiohttp.web_response</a>
  &#8226;   <a href="#aiohttp.web_runner">aiohttp.web_runner</a>
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
+ &#8226;   <a href="#aiohttp_retry.retry_options">aiohttp_retry.retry_options</a>
  &#8226;   <a href="#argparse">argparse</a>
  &#8226;   <a href="#ast">ast</a>
  &#8226;   <a href="#asyncio.base_events">asyncio.base_events</a>
@@ -31707,6 +31804,7 @@ imported by:
  &#8226;   <a href="#aiohttp.web_request">aiohttp.web_request</a>
  &#8226;   <a href="#aiohttp.web_runner">aiohttp.web_runner</a>
  &#8226;   <a href="#aiohttp.web_urldispatcher">aiohttp.web_urldispatcher</a>
+ &#8226;   <a href="#aiohttp_retry.client">aiohttp_retry.client</a>
  &#8226;   <a href="#yarl._quoting">yarl._quoting</a>
  &#8226;   <a href="#yarl._quoting_c">yarl._quoting_c</a>
  &#8226;   <a href="#yarl._quoting_py">yarl._quoting_py</a>

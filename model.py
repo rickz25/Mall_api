@@ -1,8 +1,9 @@
 from db import SQLServer
 import configparser
 import logging
+from itertools import islice
 config = configparser.ConfigParser()
-config.read(r'settings/config.txt') 
+config.read(r'settings/config.txt')
 
 # Create and configure logger
 logging.basicConfig(filename="Logs/unoLog/logs.log",
@@ -99,22 +100,24 @@ class TaskModel:
             keylist = "("
             valuelist = "("
             firstPair = True
-            for key, value in values.items():
-                if value==None:
-                    continue
-                if not firstPair:
-                    keylist += ", "
-                    valuelist += ", "
-                firstPair = False
-                keylist += key
-                if isinstance(value, str):
-                    valuelist += "'" + value + "'"
-                else:
-                    valuelist += str(value)
-            keylist += ")"
-            valuelist += ")"
-            sql += "INSERT INTO dbo." + tablename + " " + keylist + " VALUES " + valuelist + "\n"
-            return db.insert(sql)
+            for batch in batched(values.items(), bulklimit):
+                for key, value in batch:
+                    if value==None:
+                        continue
+                    if not firstPair:
+                        keylist += ", "
+                        valuelist += ", "
+                    firstPair = False
+                    keylist += key
+                    if isinstance(value, str):
+                        value=str2(value)
+                        valuelist += "'" + value + "'"
+                    else:
+                        valuelist += str(value)
+                keylist += ")"
+                valuelist += ")"
+                sql += "INSERT INTO dbo." + tablename + " " + keylist + " VALUES " + valuelist + "\n"
+            db.insert(sql)
         except Exception as e:
             logger.exception("Exception occurred when insert row: %s", str(e))
     def removeRow(self, tablename, condition):
@@ -123,6 +126,15 @@ class TaskModel:
             return db.remove(sql)
         except Exception as e:
             logger.exception("Exception occurred when query: %s", str(e))
+def str2(words):
+    return str(words).replace("'", '"')
+def batched(iterable, n):
+    # batched('ABCDEFG', 3) → ABC DEF G
+    if n < 1:
+        raise ValueError('n must be at least one')
+    iterator = iter(iterable)
+    while batch := tuple(islice(iterator, n)):
+        yield batch
     
 
             

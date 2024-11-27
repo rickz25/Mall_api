@@ -15,6 +15,7 @@ from controller import TaskController
 import json
 import aiohttp
 import asyncio
+from aiohttp_retry import RetryClient
 import socket
 import psutil
 import os
@@ -109,16 +110,21 @@ async def post_request():
                         "Content-Type": "application/json",
                         "Authorization": token
                     }
+            statuses = {x for x in range(100, 600)} #error status code retry
+            statuses.remove(200)
+            statuses.remove(429)
             conn = aiohttp.TCPConnector(limit=0)
             async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn) as session:
-                response = await session.post(url, data=json_data, headers=headers)
+                retry_client = RetryClient(session, retry_attempts=3, retry_for_statuses=statuses)
+                response = await retry_client.post(url, data=json_data, headers=headers)
                 await asyncio.sleep(1)
                 if response.ok:
                     res = await response.json()
-                    result = controller.post_data(res)
+                    controller.post_data(res)
                 else:
-                    logger.exception("Exception occurred: %s", str(result))
+                    logger.exception("Exception occurred: %s", str(response.text()))
                     load_frame1('Server Error.')
+                await retry_client.close()
         except Exception as e:
             logger.exception("Exception occurred: %s", str(e))
 
@@ -250,6 +256,8 @@ except Exception as e:
 
 logging.getLogger('schedule').setLevel(logging.WARNING)
 logging.getLogger('asyncio').setLevel(logging.WARNING)
+logging.getLogger('aiohttp_retry').setLevel(logging.WARNING)
+
 
 def minimizeWindow():
     root.withdraw()
