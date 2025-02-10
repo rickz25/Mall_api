@@ -1,8 +1,4 @@
-import sqlite3
-import pyodbc
-import configparser
-import time
-import logging
+import pyodbc, configparser, time, logging
 
 # Create and configure logger
 logging.basicConfig(filename="Logs/unoLog/logs.log",
@@ -13,34 +9,6 @@ logger.setLevel(logging.DEBUG)
 
 config = configparser.RawConfigParser()
 config.read(r'settings/config.txt') 
-
-class LiteDB:
-    def __init__(self, db):
-        self.conn = sqlite3.connect(db,check_same_thread=False)
-        self.cur = self.conn.cursor()
-        self.conn.commit()
-
-    def fetchSetting(self):
-        self.cur.execute("SELECT * FROM settings")
-        rows = self.cur.fetchone()
-        return rows
-    def getStatus(self):
-        self.cur.execute("SELECT * FROM status")
-        rows = self.cur.fetchone()
-        return rows
-
-    def insert(self, part, customer, retailer, price):
-        self.cur.execute("INSERT INTO settings VALUES (NULL, ?, ?, ?, ?)",
-                         (part, customer, retailer, price))
-        self.conn.commit()
-
-    def remove(self, id):
-        self.cur.execute("DELETE FROM settings WHERE id=?", (id,))
-        self.conn.commit()
-    def __del__(self):
-        self.conn.close()
-
-
 class SQLServer:
     def __init__(self):
         driver=config.get('mall_config', 'db_driver')
@@ -61,44 +29,44 @@ class SQLServer:
         self.cursor.execute(sql)
         return self.cursor.fetchone()
     def fetchAll(self,sql):
-        # retry_flag = 3
-        # retry_count = 0
-        # while retry_count < retry_flag:
-        #     try:
-        #         self.cursor = self.conn.cursor()
-        #         self.cursor.execute(sql)
-        #         columns = [column[0] for column in  self.cursor.description]
-        #         results = []
-        #         for row in  self.cursor.fetchall():
-        #             results.append(dict(zip(columns, row)))
-        #         return results
-        #     except Exception as e:
-        #         retry_count = retry_count + 1
-        #         time.sleep(1)
-
-
-        connection = None
-        while True:
-            # time.sleep(1)
-            if not connection:  # No connection yet? Connect.
-               self.cursor = self.conn.cursor()
+        retry_flag = 3
+        retry_count = 0
+        while retry_count < retry_flag:
             try:
+                self.cursor = self.conn.cursor()
                 self.cursor.execute(sql)
                 columns = [column[0] for column in  self.cursor.description]
                 results = []
-                for row in self.cursor.fetchall():
+                for row in  self.cursor.fetchall():
                     results.append(dict(zip(columns, row)))
                 return results
-            except pyodbc.Error as pe:
-                if pe.args[0] == "08S01":  # Communication error.
-                    # Nuke the connection and retry.
-                    try:
-                        self.conn.close()
-                    except:
-                        pass
-                    connection = None
-                    continue
-                raise logger.exception("Exception occurred: %s", pe)
+            except Exception as e:
+                retry_count = retry_count + 1
+                time.sleep(1)
+
+
+        # connection = None
+        # while True:
+        #     # time.sleep(1)
+        #     if not connection:  # No connection yet? Connect.
+        #        self.cursor = self.conn.cursor()
+        #     try:
+        #         self.cursor.execute(sql)
+        #         columns = [column[0] for column in  self.cursor.description]
+        #         results = []
+        #         for row in self.cursor.fetchall():
+        #             results.append(dict(zip(columns, row)))
+        #         return results
+        #     except pyodbc.Error as pe:
+        #         if pe.args[0] == "08S01":  # Communication error.
+        #             # Nuke the connection and retry.
+        #             try:
+        #                 self.conn.close()
+        #             except:
+        #                 pass
+        #             connection = None
+        #             continue
+        #         raise logger.exception("Exception occurred: %s", pe)
 
     def insert(self, statement):
         retry_flag = 3
@@ -150,6 +118,3 @@ class SQLServer:
     def rows(self):
         self.cursor = self.conn.cursor()
         return self.cursor.rowcount
-
-    # def __del__(self):
-    #     self.conn.close()

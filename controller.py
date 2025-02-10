@@ -1,9 +1,7 @@
-from model import TaskModel
-import json
+from compile import DataCompiler
+import json, dataclasses,configparser, logging
 from datetime import date, datetime
 from decimal import Decimal
-import logging
-import configparser
 from itertools import islice
 
 # Create and configure logger
@@ -22,12 +20,16 @@ if bulklimit == "":
 else:
    bulklimit = int(bulklimit)
 
+compiler = DataCompiler()
+
 # convertion of datetime and decimal
 def default(obj):
     if isinstance(obj, (datetime, date)):
         return obj.strftime("%Y-%m-%d %H:%M:%S") 
     if isinstance(obj, Decimal):
         return str(obj)
+    if dataclasses.is_dataclass(obj):
+            return dataclasses.asdict(obj)
     raise TypeError ("Type %s not serializable" % type(obj))
 
 class TaskController:
@@ -48,26 +50,30 @@ class TaskController:
             #         t.update(mall_code_obj)
             #     for d in Daily:
             #         d.update(mall_code_obj)
+
             DataArray['TransactionMapping'] = TransactionData
             DataArray['DailyMapping'] = Daily
             DataArray['MappingLogs'] = self.model.getMappingLogs()
-            return json.dumps(DataArray, default=default)
+            jsonData = json.dumps(DataArray, default=default)
+            return compiler.insert_data(json.loads(jsonData))
         except Exception as e:
                 str_error = str(e)
                 logger.exception("Exception occurred: %s", str_error)
     
-    def post_data(self, response):
+    def post_data(self, response, tag):
         str_error=None
         try:
-            if response['status']==0:
-                for m in response['data']['header']:
-                    self.model.postMappingHeader(m)
-                for l in response['data']['daily']:
-                    x=l.split("_")
-                    self.model.postDailyMapping(x)
-                for l in response['data']['logs']:
-                    x=l.split("_")
-                    self.model.postMappingLogs(x)
+            if response:
+                if response['status']==0:
+                     if tag:
+                        for m in tag['header_sales']:
+                            self.model.postMappingHeader(m)
+                        for l in tag['eod_sales']:
+                            x=l.split("_")
+                            self.model.postDailyMapping(x)
+                        for l in tag['logs']:
+                            x=l.split("_")
+                            self.model.postMappingLogs(x)
         except Exception as e:
             str_error = str(e)
             logger.exception("Exception occurred: %s", str_error)
@@ -285,13 +291,12 @@ class TaskController:
 
                             # user_mall
                             if tablename =='user_mall':
-                                id = values['MALL_CODE']
-                                condition = f"MALL_CODE = '{id}'"
-                                exist = self.model.checkExist(column, tablename, condition)
-                                if exist !=None:
-                                    self.model.removeRow(tablename, condition)
-                                else:
-                                    self.model.insertRow(tablename, values)
+                                username = values['username']
+                                mallcode = values['MALL_CODE']
+                                condition = f"username = '{username}' AND MALL_CODE ='{mallcode}'"
+                                exist = self.model.checkUserMallExist(tablename, condition)
+                                if exist == None:
+                                     self.model.insertRow(tablename, values)
 
                             # users
                             if tablename =='users':

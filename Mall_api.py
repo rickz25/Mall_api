@@ -1,31 +1,19 @@
 from tkinter import *
 from PIL import ImageTk
 from tkinter.font import Font
-import socket
-import schedule
-import time
-import threading
-import configparser 
-import logging
+import os, socket, schedule, time, threading, configparser, logging, socket, psutil, aiohttp, asyncio, json
 from PIL import Image
-
+from datetime import datetime
 from datetime import datetime
 from model import TaskModel
 from controller import TaskController
-import json
-import aiohttp
-import asyncio
-from aiohttp_retry import RetryClient
-import socket
-import psutil
-import os
+from aiohttp_retry import RetryClient, ExponentialRetry
+
 
 # kill process when double run the program
 process_to_kill = "Mall_api.exe"
-
 # get PID of the current process
 my_pid = os.getpid()
-
 # iterate through all running processes
 for p in psutil.process_iter():
     # if it's process we're looking for...
@@ -91,7 +79,6 @@ def telnet2(ip, port):
 	except:
 		return False 
 
-
 def load_frame1(param):
     clear_widgets(frame1)
     # stack frame 2 above frame 1
@@ -105,22 +92,48 @@ def load_frame1(param):
 async def post_request():
         try:
             url = f"http://{hq_ip}:{port}/api/post-sales-integration"
-            json_data = controller.get_data()
+            compiled = controller.get_data()
+            tag={}
+            data={}
+            if compiled['header_sales']:
+                tag['header_sales']=compiled['header_sales']['tag']
+                data['header_sales']=compiled['header_sales']['data']
+            else:
+                tag['header_sales'] = []
+                data['header_sales'] = []
+            if compiled['hourly_sales']:
+                data['hourly_sales']=compiled['hourly_sales']['data']
+            else:
+                data['header_sales'] = []
+            if compiled['eod_sales']:
+                tag['eod_sales']=compiled['eod_sales']['tag']
+                data['eod_sales']=compiled['eod_sales']['data']
+            else:
+                tag['eod_sales'] = []
+                data['eod_sales'] = []
+            if compiled['logs']:
+                tag['logs']=compiled['logs']['tag']
+                data['logs'] = compiled['logs']['data']
+            else:
+                tag['logs'] = []
+                data['logs'] = []
+
+            json_data = json.dumps(data)
+
             headers = {
-                        "Content-Type": "application/json",
+                        'Content-Type': 'application/json',
+                        'accept': 'application/json',
                         "Authorization": token
                     }
-            statuses = {x for x in range(100, 600)} #error status code retry
-            statuses.remove(200)
-            statuses.remove(429)
             conn = aiohttp.TCPConnector(limit=0)
-            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn) as session:
-                retry_client = RetryClient(session, retry_attempts=3, retry_for_statuses=statuses)
+            timeout = aiohttp.ClientTimeout(total=600)
+            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
+                retry_client = RetryClient(session, retry_options=ExponentialRetry(attempts=3), raise_for_status=[408, 500, 502, 503])
                 response = await retry_client.post(url, data=json_data, headers=headers)
                 await asyncio.sleep(1)
                 if response.ok:
                     res = await response.json()
-                    controller.post_data(res)
+                    controller.post_data(res, tag)
                 else:
                     logger.exception("Exception occurred: %s", str(response.text()))
                     load_frame1('Server Error.')
@@ -132,11 +145,13 @@ async def post_request():
 async def request_maintenance():
         try:
             headers = {
-                        "Content-Type": "application/json",
+                        'Content-Type': 'application/json',
+                        'accept': 'application/json',
                         "Authorization": token
                     }
             conn = aiohttp.TCPConnector(limit=0)
-            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn) as session:
+            timeout = aiohttp.ClientTimeout(total=600)
+            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
                 if maintenance_sync ==1:
                     global mallcode
                     mallcode = mallcode.replace(" ", "")
