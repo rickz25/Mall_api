@@ -78,25 +78,11 @@ class DataCompiler:
 class QueryBuilder:
 
     # Insert Mapping Header
-    def build_query_MappingHeader(self, jsondata):
+    def build_query(self, jsondata, tablename):
         try:
-            header_tag=[]
-            deleteSql = ''
             insertSql = ''
             sqlstatement={}
-            DataArray={}
-            TABLE_NAME = "dbo.header_sales"
-            for i in jsondata:
-                # append tag
-                header_tag.append(i['HEADER_ID'])
-                d = parsing_date(i['TRN_DATE'])
-                trn_date = d.strftime('%Y-%m-%d')
-                merchant_code = (i['MERCHANT_CODE']).strip()
-                mall_code = i['MALL_CODE']
-                template = i['TEMPLATE']
-                # For deletion statement
-                deleteSql += f"DELETE from {TABLE_NAME} WHERE TRN_DATE='{trn_date}' AND MERCHANT_CODE='{merchant_code}' AND MALL_CODE= {mall_code} AND TEMPLATE= {template}; \n"
-                    
+            for i in jsondata: 
                 keylist = "("
                 valuelist = "("
                 firstPair = True
@@ -115,15 +101,11 @@ class QueryBuilder:
                         valuelist += str(value)
                 keylist += ")"
                 valuelist += ")"
-                insertSql += "INSERT INTO " + TABLE_NAME + " " + keylist + " VALUES " + valuelist + "\n"
-            sqlstatement['delete']=deleteSql
-            sqlstatement['insert']=insertSql
-            DataArray['tag']=header_tag
-            DataArray['data']=sqlstatement
-
-            return DataArray
+                insertSql += "INSERT INTO " + tablename + " " + keylist + " VALUES " + valuelist + ";"
+            sqlstatement=insertSql
+            return sqlstatement
         except Exception as e:
-            logger.exception("Exception occurred when Insert Mapping_header: %s", str(e))
+            logger.exception("Exception occurred when Insert Daily: %s", str(e))
     
     # Insert Transaction
     def build_query_Transaction(self, jsondata):
@@ -162,7 +144,7 @@ class QueryBuilder:
                             valuelist += str(value)
                     keylist += ")"
                     valuelist += ")"
-                    insertSql += "INSERT INTO " + TABLE_NAME + " " + keylist + " VALUES " + valuelist + "\n"
+                    insertSql += "INSERT INTO " + TABLE_NAME + " " + keylist + " VALUES " + valuelist + ";\n"
                 sqlstatement['delete']=deleteSql
                 sqlstatement['insert']=insertSql
                 batcharray.append(sqlstatement)
@@ -208,7 +190,7 @@ class QueryBuilder:
                         valuelist += str(value)
                 keylist += ")"
                 valuelist += ")"
-                insertSql += "INSERT INTO " + TABLE_NAME + " " + keylist + " VALUES " + valuelist + " \n"
+                insertSql += "INSERT INTO " + TABLE_NAME + " " + keylist + " VALUES " + valuelist + "; \n"
             sqlstatement['delete']=deleteSql
             sqlstatement['insert']=insertSql
             DataArray['tag']=daily_tag
@@ -257,7 +239,7 @@ class QueryBuilder:
                         valuelist += str(value)
                 keylist += ")"
                 valuelist += ")"
-                insertSql += "INSERT INTO " + TABLE_NAME + " " + keylist + " VALUES " + valuelist + " \n"
+                insertSql += "INSERT INTO " + TABLE_NAME + " " + keylist + " VALUES " + valuelist + "; \n"
             sqlstatement['delete']=deleteSql
             sqlstatement['insert']=insertSql
             DataArray['tag']=log_tag

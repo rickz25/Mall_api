@@ -1,13 +1,13 @@
 from tkinter import *
-from PIL import ImageTk
+from PIL import ImageTk, Image
 from tkinter.font import Font
-import os, socket, schedule, time, threading, configparser, logging, socket, psutil, aiohttp, asyncio, json
-from PIL import Image
-from datetime import datetime
-from datetime import datetime
+import os, socket, schedule, time, threading, configparser, logging, socket, psutil, aiohttp, asyncio, json, dataclasses
+from datetime import datetime, date
 from model import TaskModel
 from controller import TaskController
 from aiohttp_retry import RetryClient, ExponentialRetry
+from compile import QueryBuilder
+from decimal import Decimal
 
 
 # kill process when double run the program
@@ -24,6 +24,7 @@ for p in psutil.process_iter():
 
 # Create instances of Model, View, and Controller
 model = TaskModel()
+compiler = QueryBuilder()
 controller = TaskController(model)
 datenow = datetime.today().strftime('%Y-%m-%d')
 
@@ -88,91 +89,99 @@ def load_frame1(param):
     label=Label(frame1, text=param,fg=title_color,font=titleFont, bg=bg_color)
     label.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-# Function sync for sales
-async def post_request():
+# # Function sync for sales
+# async def post_request():
+#     controller.post_request_controller()
+            
+# # Function sync for maintenance
+# async def request_maintenance():
+#     controller.request_maintenance_controller()
+
+def default(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.strftime("%Y-%m-%d %H:%M:%S") 
+    if isinstance(obj, Decimal):
+        return str(obj)
+    if dataclasses.is_dataclass(obj):
+            return dataclasses.asdict(obj)
+    raise TypeError ("Type %s not serializable" % type(obj))
+
+def parsing_date(text):
+    for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M:%S'):
         try:
-            url = f"http://{hq_ip}:{port}/api/post-sales-integration"
-            compiled = controller.get_data()
-            tag={}
-            data={}
-            if compiled['header_sales']:
-                tag['header_sales']=compiled['header_sales']['tag']
-                data['header_sales']=compiled['header_sales']['data']
-            else:
-                tag['header_sales'] = []
-                data['header_sales'] = []
-            if compiled['hourly_sales']:
-                data['hourly_sales']=compiled['hourly_sales']['data']
-            else:
-                data['header_sales'] = []
-            if compiled['eod_sales']:
-                tag['eod_sales']=compiled['eod_sales']['tag']
-                data['eod_sales']=compiled['eod_sales']['data']
-            else:
-                tag['eod_sales'] = []
-                data['eod_sales'] = []
-            if compiled['logs']:
-                tag['logs']=compiled['logs']['tag']
-                data['logs'] = compiled['logs']['data']
-            else:
-                tag['logs'] = []
-                data['logs'] = []
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            pass
+    raise ValueError('no valid date format found')
 
-            json_data = json.dumps(data)
+async def post_request():
 
-            headers = {
-                        'Content-Type': 'application/json',
-                        'accept': 'application/json',
-                        "Authorization": token
-                    }
-            conn = aiohttp.TCPConnector(limit=0)
-            timeout = aiohttp.ClientTimeout(total=600)
-            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
-                retry_client = RetryClient(session, retry_options=ExponentialRetry(attempts=3), raise_for_status=[408, 500, 502, 503])
-                response = await retry_client.post(url, data=json_data, headers=headers)
-                await asyncio.sleep(1)
-                if response.ok:
-                    res = await response.json()
-                    controller.post_data(res, tag)
-                else:
-                    logger.exception("Exception occurred: %s", str(response.text()))
-                    load_frame1('Server Error.')
-                await retry_client.close()
-        except Exception as e:
-            logger.exception("Exception occurred: %s", str(e))
+    get_sync_table = model.getSyncTable()
+    if get_sync_table:
+        for i in get_sync_table:
+            d = parsing_date(i['startdate'])
+            start_date = d.strftime('%Y-%m-%d')
+            d2 = parsing_date(i['enddate'])
+            end_date = d2.strftime('%Y-%m-%d')
+            tablename = i['table_name']
+            summary_table = model.perSummaryTable(tablename, start_date, end_date)
+            try:
+                url = f"http://{hq_ip}:{port}/api/post-sales-integration"
+
+                data = compiler.build_query(summary_table, tablename)
+                datas = data.split(";")  
+                model.updateSyncTable(tablename) #update status to 1 when getting data
+                json_data = json.dumps(datas, default=default)
+                headers = {
+                            'Content-Type': 'application/json',
+                            'accept': 'application/json',
+                            "Authorization": token
+                        }
+                conn = aiohttp.TCPConnector(limit=0)
+                timeout = aiohttp.ClientTimeout(total=600)
+                async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
+                    retry_client = RetryClient(session, retry_options=ExponentialRetry(attempts=3), raise_for_status=[408, 500, 502, 503])
+                    response = await retry_client.post(url, data=json_data, headers=headers)
+                    await asyncio.sleep(1)
+                    if response.ok:
+                        model.deleteSyncTable(tablename) #delete record when response is success
+                    else:
+                        logger.exception("Exception occurred: %s", str(response.text()))
+                    await retry_client.close()
+            except Exception as e:
+                logger.exception("Exception occurred: %s", str(e))
 
 # Function sync for maintenance
 async def request_maintenance():
-        try:
-            headers = {
-                        'Content-Type': 'application/json',
-                        'accept': 'application/json',
-                        "Authorization": token
-                    }
-            conn = aiohttp.TCPConnector(limit=0)
-            timeout = aiohttp.ClientTimeout(total=600)
-            async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
-                if maintenance_sync ==1:
-                    global mallcode
-                    mallcode = mallcode.replace(" ", "")
-                    for code in mallcode.split(","):
-                        url = f"http://{hq_ip}:{port}/api/post-maintenance"
-                        postData={}
-                        postData["mallcode"]=code
-                        response2 = await session.post(url, data=json.dumps(postData), headers=headers)
-                        responseData = await response2.json()
-                        await asyncio.sleep(5)
-                        res = json.loads(responseData)
-                        if response2.ok:
-                            if res['status']==0:
-                                result = controller.post_maintenance(res)
-                            else:
-                                logger.exception("Exception occurred: %s", res['message'])
+    try:
+        headers = {
+                    'Content-Type': 'application/json',
+                    'accept': 'application/json',
+                    "Authorization": token
+                }
+        conn = aiohttp.TCPConnector(limit=0)
+        timeout = aiohttp.ClientTimeout(total=600)
+        async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
+            if maintenance_sync ==1:
+                global mallcode
+                mallcode = mallcode.replace(" ", "")
+                for code in mallcode.split(","):
+                    url = f"http://{hq_ip}:{port}/api/post-maintenance"
+                    postData={}
+                    postData["mallcode"]=code
+                    response2 = await session.post(url, data=json.dumps(postData), headers=headers)
+                    responseData = await response2.json()
+                    await asyncio.sleep(5)
+                    res = json.loads(responseData)
+                    if response2.ok:
+                        if res['status']==0:
+                            result = controller.post_maintenance(res)
                         else:
-                            logger.exception("Exception occurred: %s", str(result))
-                            load_frame1('Server Error.')
-        except Exception as e:
-            logger.exception("Exception occurred: %s", str(e))
+                            logger.exception("Exception occurred: %s", res['message'])
+                    else:
+                        logger.exception("Exception occurred: %s", str(result))
+    except Exception as e:
+        logger.exception("Exception occurred: %s", str(e))
 
 async def main():
     # Gather task to sync and wait the other process
@@ -274,16 +283,16 @@ logging.getLogger('asyncio').setLevel(logging.WARNING)
 logging.getLogger('aiohttp_retry').setLevel(logging.WARNING)
 
 
-def minimizeWindow():
-    root.withdraw()
-    root.overrideredirect(False)
-    root.iconify()
+# def minimizeWindow():
+#     root.withdraw()
+#     root.overrideredirect(False)
+#     root.iconify()
 
-def disable_event():
-    pass
+# def disable_event():
+#     pass
 
-root.resizable(False, False)
-root.protocol("WM_DELETE_WINDOW", minimizeWindow)
+# root.resizable(False, False)
+# root.protocol("WM_DELETE_WINDOW", minimizeWindow)
 
 # run app
 root.mainloop()

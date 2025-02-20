@@ -4,7 +4,9 @@ from model import TaskModel
 from controller import TaskController
 import configparser 
 import psutil
-import os, logging
+import os
+import re
+
 
 # Create instances of Model, View, and Controller
 model = TaskModel()
@@ -14,21 +16,6 @@ config.read(r'settings/config.txt')
 hq_ip =  config.get('mall_config', 'HQ_IP')
 port =  config.get('mall_config', 'Port')
 process_to_kill = "create_script.exe"
-
-# Create and configure logger
-# logging.basicConfig(filename="Logs/script/script.log",
-#                     format='%(asctime)s %(message)s',
-#                     filemode='w')
-# logger = logging.getLogger()
-# logger.setLevel(logging.DEBUG)
-
-logging.basicConfig(
-    filename="Logs/script/script.log",
-    encoding="utf-8",
-    filemode="a",
-    format="{asctime} - {levelname} - {message}",
-    style="{",
-    datefmt="%Y-%m-%d %H:%M")
 
 # get PID of the current process
 my_pid = os.getpid()
@@ -40,22 +27,38 @@ for p in psutil.process_iter():
         # and if the process has a different PID than the current process, kill it
         if not p.pid == my_pid:
             p.terminate()
-            
-
 
 def get_script():
     compiled = controller.get_data()
-
-    data=[]
+    data=""
     if compiled['header_sales']:
-        data.append(compiled['header_sales']['data'])
+        data_delete = compiled['header_sales']['data']['delete']
+        data_insert = compiled['header_sales']['data']['insert']
+        data +=data_delete
+        data +=data_insert
+        
     if compiled['hourly_sales']:
-        data.append(compiled['hourly_sales']['data'])
+        hourly = compiled['hourly_sales']['data']
+        for i in hourly:
+            data_delete = i['delete']
+            data_insert = i['insert']
+            data +=data_delete
+            data +=data_insert
     if compiled['eod_sales']:
-        data.append(compiled['eod_sales']['data'])
+        data_delete = compiled['eod_sales']['data']['delete']
+        data_insert = compiled['eod_sales']['data']['insert']
+        data +=data_delete
+        data +=data_insert
     if compiled['logs']:
-        data.append(compiled['logs']['data'])
-    logging.info(data)
+        data_delete = compiled['logs']['data']['delete']
+        data_insert = compiled['logs']['data']['insert']
+        data +=data_delete
+        data +=data_insert
+    
+    text_file = open("Logs/script/script.sql", "w")
+    text_file.write(str(data))
+    text_file.close()    
+    
     return
 
 get_script()

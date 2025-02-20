@@ -1,8 +1,9 @@
-from compile import DataCompiler
-import json, dataclasses,configparser, logging
+import dataclasses,configparser, logging
 from datetime import date, datetime
 from decimal import Decimal
-from itertools import islice
+
+config = configparser.ConfigParser()
+config.read(r'settings/config.txt') 
 
 # Create and configure logger
 logging.basicConfig(filename="Logs/unoLog/logs.log",
@@ -11,16 +12,12 @@ logging.basicConfig(filename="Logs/unoLog/logs.log",
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+hq_ip =  config.get('mall_config', 'HQ_IP')
+port =  config.get('mall_config', 'Port')
+token = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTY1NDc1NDg1NCwiaWF0IjoxNjU0NzU0ODU0fQ.p6WAfLuC39cMk3XEF4LcU5iZy1rzbL0VTKVpTY7mRGQ"
+
 config = configparser.ConfigParser()
 config.read(r'settings/config.txt') 
-
-bulklimit =  config.get('mall_config', 'bulk_limit')
-if bulklimit == "":
-    bulklimit=100
-else:
-   bulklimit = int(bulklimit)
-
-compiler = DataCompiler()
 
 # convertion of datetime and decimal
 def default(obj):
@@ -35,30 +32,6 @@ def default(obj):
 class TaskController:
     def __init__(self, model):
         self.model = model
-    
-    def get_data(self):
-        try:
-            DataArray={}
-            DataArray['MappingHeader'] = self.model.getMappingHeader()
-            TransactionData = self.model.getTransaction()
-            Daily = self.model.getDaily()
-            
-            # if DataArray['MappingHeader']:
-            #     DataArray['MappingHeader'][0]['MALL_CODE']
-            #     mall_code_obj = {"MALL_CODE":DataArray['MappingHeader'][0]['MALL_CODE']}
-            #     for t in TransactionData:
-            #         t.update(mall_code_obj)
-            #     for d in Daily:
-            #         d.update(mall_code_obj)
-
-            DataArray['TransactionMapping'] = TransactionData
-            DataArray['DailyMapping'] = Daily
-            DataArray['MappingLogs'] = self.model.getMappingLogs()
-            jsonData = json.dumps(DataArray, default=default)
-            return compiler.insert_data(json.loads(jsonData))
-        except Exception as e:
-                str_error = str(e)
-                logger.exception("Exception occurred: %s", str_error)
     
     def post_data(self, response, tag):
         str_error=None
@@ -318,13 +291,6 @@ class TaskController:
             str_error += str(e)
         return str_error
     
-def batched(iterable, n):
-    # batched('ABCDEFG', 3) → ABC DEF G
-    if n < 1:
-        raise ValueError('n must be at least one')
-    iterator = iter(iterable)
-    while batch := tuple(islice(iterator, n)):
-        yield batch
 
             
         
