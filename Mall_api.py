@@ -113,6 +113,7 @@ async def post_request():
                 d2 = parsing_date(i['enddate'])
                 end_date = d2.strftime('%Y-%m-%d %H:%M:%S')
                 tablename = i['table_name']
+                model.updateSyncTable(tablename) #update status to 1 when getting data
                 rows_count = model.countRows(tablename, start_date, end_date)
                 value = rows_count[0]
                 while value !=0:
@@ -138,7 +139,6 @@ async def post_request():
                             logger.exception("Exception occurred: %s", str(response.text()))
                         await retry_client.close()
                     value = value-len(data)
-                model.updateSyncTable(tablename) #update status to 1 when getting data
                 model.deleteSyncTable(tablename) #delete record when response is success
     except Exception as e:
         logger.exception("Exception occurred: %s", str(e))

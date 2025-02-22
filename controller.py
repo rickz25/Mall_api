@@ -62,7 +62,7 @@ class QueryBuilder:
                 cccode = i['CCCODE'].strip()
                 trn_date = i['TRN_DATE'].strip()
                 ter_no = i['TER_NO'].strip()
-                updateSql += f"UPDATE {tablename} set tag_sync=1 WHERE TRN_DATE='{trn_date}' AND CCCODE='{cccode}' AND TER_NO= {ter_no}; \n"
+                updateSql += f"UPDATE {tablename} set tag_sync=1 WHERE TRN_DATE='{trn_date}' AND CCCODE='{cccode}' AND TER_NO= '{ter_no}'; \n"
                 keylist = "("
                 valuelist = "("
                 firstPair = True
