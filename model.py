@@ -35,9 +35,9 @@ class TaskModel:
         try:
             query=''
             if tablename=='accounting_report_summary':
-                query = f"SELECT CCCODE, TRN_DATE, TER_NO, MERCHANT_NAME, BRN_CODE, BRN_DESC, MALL_AREA_CODE, MALL_AREA_DESCRIPTION, BUILDING_CODE, BUILDING_DESCRIPTION, MF_CODE, MF_DESCRIPTION, STORE_NAME, OLD_GRNTOT, NEW_GRNTOT, GROSS_SLS, DISCOUNTS, REFUND_AMT, VOID_AMNT, SCHRGE_AMT, VAT_AMNT, LOCAL_TAX, VATEXEMPT_SLS, NETSALES, CASH_SLS, OTHER_SLS, CHECK_SLS, GC_SLS, MASTERCARD_SLS, VISA_SLS, AMEX_SLS, DINERS_SLS, JCB_SLS, GCASH_SLS, PAYMAYA_SLS, ALIPAY_SLS, WECHAT_SLS, GRAB_SLS, FOODPANDA_SLS, MASTERDEBIT_SLS, VISADEBIT_SLS, PAYPAL_SLS, NO_CASH_PAYMENT, NO_OTHER_SLS, NO_CHECK_SLS, NO_GC_SLS, NO_MASTERCARD_SLS, NO_VISA_SLS, NO_AMEX_SLS, NO_DINERS_SLS, NO_JCB_SLS, NO_GCASH_SLS, NO_PAYMAYA_SLS, NO_ALIPAY_SLS, NO_WECHAT_SLS, NO_GRAB_SLS, NO_FOODPANDA_SLS, NO_MASTERDEBIT_SLS, NO_VISADEBIT_SLS, NO_PAYPAL_SLS, PWD_DISC, SNRCIT_DISC, EMPLO_DISC, AYALA_DISC, STORE_DISC, OTHER_DISC, NO_PWD_DISC, NO_SNRCIT_DISC, NO_EMPLO_DISC, NO_AYALA_DISC, NO_STORE_DISC, NO_OTHER_DISC from {tablename} where UPDATE_TIME BETWEEN '{start_date}' AND '{end_date}';"
+                query = f"SELECT TOP {bulklimit} CCCODE, TRN_DATE, TER_NO, MERCHANT_NAME, BRN_CODE, BRN_DESC, MALL_AREA_CODE, MALL_AREA_DESCRIPTION, BUILDING_CODE, BUILDING_DESCRIPTION, MF_CODE, MF_DESCRIPTION, STORE_NAME, OLD_GRNTOT, NEW_GRNTOT, GROSS_SLS, DISCOUNTS, REFUND_AMT, VOID_AMNT, SCHRGE_AMT, VAT_AMNT, LOCAL_TAX, VATEXEMPT_SLS, NETSALES, CASH_SLS, OTHER_SLS, CHECK_SLS, GC_SLS, MASTERCARD_SLS, VISA_SLS, AMEX_SLS, DINERS_SLS, JCB_SLS, GCASH_SLS, PAYMAYA_SLS, ALIPAY_SLS, WECHAT_SLS, GRAB_SLS, FOODPANDA_SLS, MASTERDEBIT_SLS, VISADEBIT_SLS, PAYPAL_SLS, NO_CASH_PAYMENT, NO_OTHER_SLS, NO_CHECK_SLS, NO_GC_SLS, NO_MASTERCARD_SLS, NO_VISA_SLS, NO_AMEX_SLS, NO_DINERS_SLS, NO_JCB_SLS, NO_GCASH_SLS, NO_PAYMAYA_SLS, NO_ALIPAY_SLS, NO_WECHAT_SLS, NO_GRAB_SLS, NO_FOODPANDA_SLS, NO_MASTERDEBIT_SLS, NO_VISADEBIT_SLS, NO_PAYPAL_SLS, PWD_DISC, SNRCIT_DISC, EMPLO_DISC, AYALA_DISC, STORE_DISC, OTHER_DISC, NO_PWD_DISC, NO_SNRCIT_DISC, NO_EMPLO_DISC, NO_AYALA_DISC, NO_STORE_DISC, NO_OTHER_DISC from {tablename} where UPDATE_TIME BETWEEN '{start_date}' AND '{end_date}' AND tag_sync=0 ORDER BY UPDATE_TIME ASC;"
             if tablename=='it_report_summary':
-                query = f"SELECT CCCODE, TRN_DATE, TER_NO, BRN_CODE, BRN_DESC, MALL_AREA_CODE, MALL_AREA_DESCRIPTION, BUILDING_CODE, BUILDING_DESCRIPTION, MF_CODE, MF_DESCRIPTION, STORE_NAME, COMPANY_CODE, MERCHANT_CLASS_DESCRIPTION, TEMPORARY_CONTRACT_NUMBER, NETSALES from {tablename} where UPDATE_TIME BETWEEN '{start_date}' AND '{end_date}';"
+                query = f"SELECT TOP {bulklimit} CCCODE, TRN_DATE, TER_NO, BRN_CODE, BRN_DESC, MALL_AREA_CODE, MALL_AREA_DESCRIPTION, BUILDING_CODE, BUILDING_DESCRIPTION, MF_CODE, MF_DESCRIPTION, STORE_NAME, COMPANY_CODE, MERCHANT_CLASS_DESCRIPTION, TEMPORARY_CONTRACT_NUMBER, NETSALES from {tablename} where UPDATE_TIME BETWEEN '{start_date}' AND '{end_date}' AND tag_sync=0 ORDER BY UPDATE_TIME ASC;"
             # query = f"SELECT top 10 * from {tablename} where UPDATE_TIME BETWEEN '{start_date}' AND '{end_date}';"
             return db.fetchAll(query)
         except Exception as e:
@@ -46,6 +46,17 @@ class TaskModel:
         try:
             sql=f"UPDATE sync_table set status=1 WHERE status = 0 AND table_name = '{tablename}';"
             return db.update(sql)
+        except Exception as e:
+            logger.exception("Exception occurred: %s", str(e))
+    def updateSummaryTable(self, sql):
+        try:
+            return db.update(sql)
+        except Exception as e:
+            logger.exception("Exception occurred: %s", str(e))
+    def countRows(self, tablename, start_date, end_date):
+        try:
+            sql=f"SELECT COUNT(*) from {tablename} where UPDATE_TIME BETWEEN '{start_date}' AND '{end_date}' AND tag_sync=0 ;"
+            return db.fetchOne(sql)
         except Exception as e:
             logger.exception("Exception occurred: %s", str(e))
     def deleteSyncTable(self, tablename):

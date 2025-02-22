@@ -4,11 +4,9 @@ from tkinter.font import Font
 import os, socket, schedule, time, threading, configparser, logging, socket, psutil, aiohttp, asyncio, json, dataclasses
 from datetime import datetime, date
 from model import TaskModel
-from controller import TaskController
+from controller import TaskController, QueryBuilder
 from aiohttp_retry import RetryClient, ExponentialRetry
-from compile import QueryBuilder
 from decimal import Decimal
-
 
 # kill process when double run the program
 process_to_kill = "Mall_api.exe"
@@ -24,7 +22,6 @@ for p in psutil.process_iter():
 
 # Create instances of Model, View, and Controller
 model = TaskModel()
-compiler = QueryBuilder()
 controller = TaskController(model)
 datenow = datetime.today().strftime('%Y-%m-%d')
 
@@ -89,14 +86,6 @@ def load_frame1(param):
     label=Label(frame1, text=param,fg=title_color,font=titleFont, bg=bg_color)
     label.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-# # Function sync for sales
-# async def post_request():
-#     controller.post_request_controller()
-            
-# # Function sync for maintenance
-# async def request_maintenance():
-#     controller.request_maintenance_controller()
-
 def default(obj):
     if isinstance(obj, (datetime, date)):
         return obj.strftime("%Y-%m-%d %H:%M:%S") 
@@ -115,41 +104,44 @@ def parsing_date(text):
     raise ValueError('no valid date format found')
 
 async def post_request():
-
-    get_sync_table = model.getSyncTable()
-    if get_sync_table:
-        for i in get_sync_table:
-            d = parsing_date(i['startdate'])
-            start_date = d.strftime('%Y-%m-%d')
-            d2 = parsing_date(i['enddate'])
-            end_date = d2.strftime('%Y-%m-%d')
-            tablename = i['table_name']
-            summary_table = model.perSummaryTable(tablename, start_date, end_date)
-            try:
-                url = f"http://{hq_ip}:{port}/api/post-sales-integration"
-
-                data = compiler.build_query(summary_table, tablename)
-                datas = data.split(";")  
+    try:
+        get_sync_table = model.getSyncTable()
+        if get_sync_table:
+            for i in get_sync_table:
+                d = parsing_date(i['startdate'])
+                start_date = d.strftime('%Y-%m-%d %H:%M:%S')
+                d2 = parsing_date(i['enddate'])
+                end_date = d2.strftime('%Y-%m-%d %H:%M:%S')
+                tablename = i['table_name']
+                rows_count = model.countRows(tablename, start_date, end_date)
+                value = rows_count[0]
+                while value !=0:
+                    summary_table = model.perSummaryTable(tablename, start_date, end_date)
+                    url = f"http://{hq_ip}:{port}/api/post-sales-integration"
+                    data = QueryBuilder().build_query(summary_table, tablename)
+                    json_data = json.dumps(data, default=default)
+                    headers = {
+                                'Content-Type': 'application/json',
+                                'accept': 'application/json',
+                                "Authorization": token
+                            }
+                    conn = aiohttp.TCPConnector(limit=0)
+                    timeout = aiohttp.ClientTimeout(total=600)
+                    async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
+                        retry_client = RetryClient(session, retry_options=ExponentialRetry(attempts=3), raise_for_status=[408, 500, 502, 503])
+                        response = await retry_client.post(url, data=json_data, headers=headers)
+                        await asyncio.sleep(1)
+                        if response.ok:
+                            res = await response.json()
+                            print(res)
+                        else:
+                            logger.exception("Exception occurred: %s", str(response.text()))
+                        await retry_client.close()
+                    value = value-len(data)
                 model.updateSyncTable(tablename) #update status to 1 when getting data
-                json_data = json.dumps(datas, default=default)
-                headers = {
-                            'Content-Type': 'application/json',
-                            'accept': 'application/json',
-                            "Authorization": token
-                        }
-                conn = aiohttp.TCPConnector(limit=0)
-                timeout = aiohttp.ClientTimeout(total=600)
-                async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
-                    retry_client = RetryClient(session, retry_options=ExponentialRetry(attempts=3), raise_for_status=[408, 500, 502, 503])
-                    response = await retry_client.post(url, data=json_data, headers=headers)
-                    await asyncio.sleep(1)
-                    if response.ok:
-                        model.deleteSyncTable(tablename) #delete record when response is success
-                    else:
-                        logger.exception("Exception occurred: %s", str(response.text()))
-                    await retry_client.close()
-            except Exception as e:
-                logger.exception("Exception occurred: %s", str(e))
+                model.deleteSyncTable(tablename) #delete record when response is success
+    except Exception as e:
+        logger.exception("Exception occurred: %s", str(e))
 
 # Function sync for maintenance
 async def request_maintenance():
@@ -283,16 +275,16 @@ logging.getLogger('asyncio').setLevel(logging.WARNING)
 logging.getLogger('aiohttp_retry').setLevel(logging.WARNING)
 
 
-# def minimizeWindow():
-#     root.withdraw()
-#     root.overrideredirect(False)
-#     root.iconify()
+def minimizeWindow():
+    root.withdraw()
+    root.overrideredirect(False)
+    root.iconify()
 
-# def disable_event():
-#     pass
+def disable_event():
+    pass
 
-# root.resizable(False, False)
-# root.protocol("WM_DELETE_WINDOW", minimizeWindow)
+root.resizable(False, False)
+root.protocol("WM_DELETE_WINDOW", minimizeWindow)
 
 # run app
 root.mainloop()
