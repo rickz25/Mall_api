@@ -47,8 +47,8 @@ hq_ip =  config.get('mall_config', 'HQ_IP')
 port =  config.get('mall_config', 'Port')
 scheduleStart =  config.get('mall_config', 'task_schedule')
 mallcode = config.get('mall_config', 'Mall_Code')
-
 maintenance_sync = config.get('mall_config', 'Maintenance_sync')
+in_process = False  # Flag to prevent re-execution
 
 token = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTY1NDc1NDg1NCwiaWF0IjoxNjU0NzU0ODU0fQ.p6WAfLuC39cMk3XEF4LcU5iZy1rzbL0VTKVpTY7mRGQ"
 
@@ -104,6 +104,12 @@ def parsing_date(text):
     raise ValueError('no valid date format found')
 
 async def post_request():
+    global in_process
+    if in_process:
+        print("Process already running, skipping execution.")
+        return
+
+    in_process = True
     try:
         get_sync_table = model.getSyncTable()
         if get_sync_table:
@@ -150,6 +156,8 @@ async def post_request():
                 
     except Exception as e:
         logger.exception("Exception occurred: %s", str(e))
+    finally:
+        in_process = False  # Reset the flag after the function finishes
 
 # Function sync for maintenance
 async def request_maintenance():
@@ -282,16 +290,16 @@ logging.getLogger('schedule').setLevel(logging.WARNING)
 logging.getLogger('asyncio').setLevel(logging.WARNING)
 logging.getLogger('aiohttp_retry').setLevel(logging.WARNING)
 
-def minimizeWindow():
-    root.withdraw()
-    root.overrideredirect(False)
-    root.iconify()
+# def minimizeWindow():
+#     root.withdraw()
+#     root.overrideredirect(False)
+#     root.iconify()
 
-def disable_event():
-    pass
+# def disable_event():
+#     pass
 
-root.resizable(False, False)
-root.protocol("WM_DELETE_WINDOW", minimizeWindow)
+# root.resizable(False, False)
+# root.protocol("WM_DELETE_WINDOW", minimizeWindow)
 
 # run app
 root.mainloop()
