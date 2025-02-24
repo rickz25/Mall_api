@@ -27,7 +27,7 @@ class TaskModel:
 
     def getSyncTable(self):
         try:
-            sql=f"SELECT table_name, FORMAT((start_recordDT), 'yyyy-MM-dd hh:mm:ss') as startdate, FORMAT((end_recordDT), 'yyyy-MM-dd hh:mm:ss') as enddate from sync_table where status=0;"
+            sql=f"SELECT id, table_name, FORMAT((start_recordDT), 'yyyy-MM-dd hh:mm:ss') as startdate, FORMAT((end_recordDT), 'yyyy-MM-dd hh:mm:ss') as enddate from sync_table where status=0;"
             return db.fetchAll(sql)
         except Exception as e:
             logger.exception("Exception occurred: %s", str(e))

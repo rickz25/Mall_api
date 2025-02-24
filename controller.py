@@ -56,59 +56,55 @@ class QueryBuilder:
     # Insert Mapping Header
     def build_query(self, jsondata, tablename):
         try:
-            insertSql = []
-            updateSql = ''
-            for i in jsondata: 
-                cccode = i['CCCODE'].strip()
-                trn_date = i['TRN_DATE'].strip()
-                ter_no = i['TER_NO'].strip()
-                updateSql += f"UPDATE {tablename} set tag_sync=1 WHERE TRN_DATE='{trn_date}' AND CCCODE='{cccode}' AND TER_NO= '{ter_no}'; \n"
-                keylist = "("
-                valuelist = "("
-                firstPair = True
-                for key, value in i.items():
-                    if value==None:
-                        continue
-                    if not firstPair:
-                        keylist += ", "
-                        valuelist += ", "
-                    firstPair = False
-                    keylist += key
-                    if isinstance(value, str):
-                        value=str2(value)
-                        valuelist += "'" + value + "'"
+            insertSql = ""
+            where_condition = []
+            sqlScript=[]
+            column=''
+            if jsondata:
+                for i in jsondata: 
+                    cccode = i['CCCODE'].strip()
+                    trn_date = i['TRN_DATE'].strip()
+                    ter_no = i['TER_NO'].strip()
+                    where_condition.append(f"'{trn_date}_{cccode}_{ter_no}'")
+                    keylist = "("
+                    valuelist = "("
+                    firstPair = True
+                    for key, value in i.items():
+                        if value==None:
+                            # continue
+                            valuelist += 0
+                        if not firstPair:
+                            keylist += ", "
+                            valuelist += ", "
+                        firstPair = False
+                        keylist += key
+                        if isinstance(value, str):
+                            value=str2(value)
+                            valuelist += "'" + value + "'"
+                        else:
+                            valuelist += str(value)
+                    keylist += ")"
+                    valuelist += ")"
+                    column = keylist
+                    # insertSql.append("INSERT INTO " + tablename + " " + keylist + " VALUES " + valuelist + "")
+                    if i == jsondata[-1]:
+                        insertSql +=valuelist + ";"
                     else:
-                        valuelist += str(value)
-                keylist += ")"
-                valuelist += ")"
-                insertSql.append("INSERT INTO " + tablename + " " + keylist + " VALUES " + valuelist + "")
-            model.updateSummaryTable(updateSql)
-            return insertSql
+                        insertSql +=valuelist + ", \n"
+                convert_toString =','.join(where_condition)
+                updateSql =f"UPDATE {tablename} set tag_sync=1 WHERE TRIM(TRN_DATE)+ '_' + TRIM(CCCODE) + '_' + TRIM(TER_NO) IN ({convert_toString});" 
+                deleteSql =f"DELETE FROM {tablename} WHERE TRIM(TRN_DATE)+ '_' + TRIM(CCCODE) + '_' + TRIM(TER_NO) IN ({convert_toString});" 
+                insertScript = f"INSERT INTO {tablename} " + column + "\n VALUES" + insertSql
+                model.updateSummaryTable(updateSql)
+                sqlScript.append(deleteSql)
+                sqlScript.append(insertScript)
+                return sqlScript
         except Exception as e:
             logger.exception("Exception occurred when Insert Daily: %s", str(e))
 
 class TaskController:
     def __init__(self, model):
         self.model = model
-    
-    def post_data(self, response, tag):
-        str_error=None
-        try:
-            if response:
-                if response['status']==0:
-                     if tag:
-                        for m in tag['header_sales']:
-                            self.model.postMappingHeader(m)
-                        for l in tag['eod_sales']:
-                            x=l.split("_")
-                            self.model.postDailyMapping(x)
-                        for l in tag['logs']:
-                            x=l.split("_")
-                            self.model.postMappingLogs(x)
-        except Exception as e:
-            str_error = str(e)
-            logger.exception("Exception occurred: %s", str_error)
-        return str_error
     
     def post_maintenance(self, response):
         str_error=""

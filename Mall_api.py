@@ -113,12 +113,12 @@ async def post_request():
                 d2 = parsing_date(i['enddate'])
                 end_date = d2.strftime('%Y-%m-%d %H:%M:%S')
                 tablename = i['table_name']
-                model.updateSyncTable(tablename) #update status to 1 when getting data
                 rows_count = model.countRows(tablename, start_date, end_date)
                 value = rows_count[0]
-                while value !=0:
-                    summary_table = model.perSummaryTable(tablename, start_date, end_date)
+                model.updateSyncTable(tablename) #update status to 1 when getting data
+                while value >1:
                     url = f"http://{hq_ip}:{port}/api/post-sales-integration"
+                    summary_table = model.perSummaryTable(tablename, start_date, end_date)
                     data = QueryBuilder().build_query(summary_table, tablename)
                     json_data = json.dumps(data, default=default)
                     headers = {
@@ -131,15 +131,20 @@ async def post_request():
                     async with aiohttp.ClientSession(trust_env=True, version = aiohttp.http.HttpVersion10, connector=conn, timeout=timeout) as session:
                         retry_client = RetryClient(session, retry_options=ExponentialRetry(attempts=3), raise_for_status=[408, 500, 502, 503])
                         response = await retry_client.post(url, data=json_data, headers=headers)
-                        await asyncio.sleep(1)
+                        # await asyncio.sleep(1)
                         if response.ok:
                             res = await response.json()
                             print(res)
                         else:
                             logger.exception("Exception occurred: %s", str(response.text()))
                         await retry_client.close()
-                    value = value-len(data)
-                model.deleteSyncTable(tablename) #delete record when response is success
+                    if summary_table:
+                        value -= len(summary_table)
+                    else:
+                        value = 0
+                    if value >= 0:
+                        model.deleteSyncTable(tablename) #delete record when response is success
+                
     except Exception as e:
         logger.exception("Exception occurred: %s", str(e))
 
