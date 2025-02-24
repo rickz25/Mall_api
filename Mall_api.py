@@ -108,6 +108,8 @@ async def post_request():
         get_sync_table = model.getSyncTable()
         if get_sync_table:
             for i in get_sync_table:
+                id = i['id']
+                model.updateSyncTable(id) #update status to 1 when getting data
                 d = parsing_date(i['startdate'])
                 start_date = d.strftime('%Y-%m-%d %H:%M:%S')
                 d2 = parsing_date(i['enddate'])
@@ -115,8 +117,7 @@ async def post_request():
                 tablename = i['table_name']
                 rows_count = model.countRows(tablename, start_date, end_date)
                 value = rows_count[0]
-                model.updateSyncTable(tablename) #update status to 1 when getting data
-                while value >1:
+                while value !=0:
                     url = f"http://{hq_ip}:{port}/api/post-sales-integration"
                     summary_table = model.perSummaryTable(tablename, start_date, end_date)
                     data = QueryBuilder().build_query(summary_table, tablename)
@@ -142,8 +143,10 @@ async def post_request():
                         value -= len(summary_table)
                     else:
                         value = 0
-                    if value >= 0:
-                        model.deleteSyncTable(tablename) #delete record when response is success
+                    if  value < 0:
+                        value = 0
+                    if value == 0:
+                        model.deleteSyncTable(id) #delete record when response is success
                 
     except Exception as e:
         logger.exception("Exception occurred: %s", str(e))
@@ -278,7 +281,6 @@ except Exception as e:
 logging.getLogger('schedule').setLevel(logging.WARNING)
 logging.getLogger('asyncio').setLevel(logging.WARNING)
 logging.getLogger('aiohttp_retry').setLevel(logging.WARNING)
-
 
 def minimizeWindow():
     root.withdraw()
